@@ -8,7 +8,7 @@ A Go application for cleaning up merged git branches interactively using fuzzy f
 - 🎯 Detects branches ready for deletion using multiple methods:
   - Branches merged into the default branch (traditional merge)
   - Branches with deleted remotes (squash/rebase merges)
-  - Supports both English and Spanish git messages
+  - Platform-independent operation (works regardless of system language)
 - 🔍 Interactive multi-selection using go-fzf
 - ✅ Safe deletion with confirmation prompt
 - 📊 Clear status indicators throughout the process
