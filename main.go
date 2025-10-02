@@ -121,7 +121,7 @@ func main() {
 	if len(mergedBranches) > 0 {
 		fmt.Printf("   • %d branches merged into %s\n", len(mergedBranches), defaultBranch)
 	}
-	
+
 	// Use go-fzf for selection
 	selectedBranches, err := selectBranchesWithFzf(branchesToDelete)
 	if err != nil {
@@ -142,7 +142,7 @@ func main() {
 	for _, branch := range selectedBranches {
 		fmt.Printf("  • %s\n", branch)
 	}
-	
+
 	fmt.Print("\nAre you sure you want to delete these branches? (y/N): ")
 	reader := bufio.NewReader(os.Stdin)
 	response, _ := reader.ReadString('\n')
@@ -181,7 +181,7 @@ func updateRemoteRefs() error {
 	if err != nil {
 		return fmt.Errorf("fetch failed: %s", string(output))
 	}
-	
+
 	// Update remote tracking branches
 	cmd = exec.Command("git", "remote", "update", "--prune")
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
@@ -189,7 +189,7 @@ func updateRemoteRefs() error {
 	if err != nil {
 		return fmt.Errorf("remote update failed: %s", string(output))
 	}
-	
+
 	return nil
 }
 
@@ -297,7 +297,7 @@ func selectBranchesWithFzf(branches []string) ([]string, error) {
 	indices, err := f.Find(branches, func(i int) string {
 		return branches[i]
 	})
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("abort")
 	}
@@ -314,7 +314,7 @@ func deleteBranch(branch string) error {
 	cmd := exec.Command("git", "branch", "-d", branch)
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	output, err := cmd.CombinedOutput()
-	
+
 	// If safe delete fails, the branch might have unmerged commits
 	// but we already know it's merged to default branch
 	if err != nil {
@@ -326,7 +326,7 @@ func deleteBranch(branch string) error {
 			return fmt.Errorf("%s", string(output))
 		}
 	}
-	
+
 	return nil
 }
 

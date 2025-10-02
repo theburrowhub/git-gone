@@ -15,25 +15,31 @@ A Go application for cleaning up merged git branches interactively using fuzzy f
 
 ## Installation
 
+### Quick install (recommended)
+
+```bash
+# Download and run the installation script
+curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/gitcleaner/main/install.sh | bash
+```
+
 ### From source
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/YOUR_USERNAME/gitcleaner.git
 cd gitcleaner
 
-# Build the application
-go build -o gitcleaner
+# Use the installation script for local build
+./install.sh
 
-# Optional: Move to PATH
+# Or build manually
+go build -o gitcleaner
 sudo mv gitcleaner /usr/local/bin/
 ```
 
-### Using go install
+### Download binary
 
-```bash
-go install gitcleaner
-```
+Download the latest release from the [releases page](https://github.com/YOUR_USERNAME/gitcleaner/releases) for your platform.
 
 ## Usage
 
