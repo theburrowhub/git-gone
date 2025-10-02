@@ -19,14 +19,14 @@ A Go application for cleaning up merged git branches interactively using fuzzy f
 
 ```bash
 # Download and run the installation script
-curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/gitcleaner/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/theburrowhub/gitcleaner/main/install.sh | bash
 ```
 
 ### From source
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/gitcleaner.git
+git clone https://github.com/theburrowhub/gitcleaner.git
 cd gitcleaner
 
 # Use the installation script for local build
@@ -39,7 +39,7 @@ sudo mv gitcleaner /usr/local/bin/
 
 ### Download binary
 
-Download the latest release from the [releases page](https://github.com/YOUR_USERNAME/gitcleaner/releases) for your platform.
+Download the latest release from the [releases page](https://github.com/theburrowhub/gitcleaner/releases) for your platform.
 
 ## Usage
 
@@ -93,4 +93,4 @@ The application will:
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
