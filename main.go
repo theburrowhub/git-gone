@@ -142,12 +142,14 @@ func main() {
 
 func checkGitRepository() error {
 	cmd := exec.Command("git", "status")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	return cmd.Run()
 }
 
 func updateRemoteRefs() error {
 	// Fetch all remotes with prune
 	cmd := exec.Command("git", "fetch", "--all", "--prune")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("fetch failed: %s", string(output))
@@ -155,6 +157,7 @@ func updateRemoteRefs() error {
 	
 	// Update remote tracking branches
 	cmd = exec.Command("git", "remote", "update", "--prune")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	output, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("remote update failed: %s", string(output))
@@ -166,6 +169,7 @@ func updateRemoteRefs() error {
 func getDefaultBranch() (string, error) {
 	// Try to get the default branch from remote
 	cmd := exec.Command("git", "symbolic-ref", "refs/remotes/origin/HEAD")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	output, err := cmd.Output()
 	if err == nil {
 		// Extract branch name from refs/remotes/origin/main format
@@ -179,6 +183,7 @@ func getDefaultBranch() (string, error) {
 	commonDefaults := []string{"main", "master", "develop"}
 	for _, branch := range commonDefaults {
 		cmd := exec.Command("git", "rev-parse", "--verify", branch)
+		cmd.Env = append(os.Environ(), "LC_ALL=C")
 		if err := cmd.Run(); err == nil {
 			return branch, nil
 		}
@@ -189,6 +194,7 @@ func getDefaultBranch() (string, error) {
 
 func getCurrentBranch() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -198,7 +204,9 @@ func getCurrentBranch() (string, error) {
 
 func getGoneBranches() ([]string, error) {
 	// Get branches whose remote tracking branch is gone
+	// Use LC_ALL=C to ensure consistent English output across all platforms
 	cmd := exec.Command("git", "branch", "--format", "%(refname:short) %(upstream:track)")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -207,8 +215,8 @@ func getGoneBranches() ([]string, error) {
 	lines := strings.Split(string(output), "\n")
 	var branches []string
 	for _, line := range lines {
-		// Check if the branch has [gone] or [desaparecido] (Spanish)
-		if strings.Contains(line, "[gone]") || strings.Contains(line, "[desaparecido]") {
+		// Check if the branch has [gone] (always in English due to LC_ALL=C)
+		if strings.Contains(line, "[gone]") {
 			// Extract branch name (first word)
 			parts := strings.Fields(line)
 			if len(parts) > 0 {
@@ -222,6 +230,7 @@ func getGoneBranches() ([]string, error) {
 func getMergedBranches(defaultBranch string) ([]string, error) {
 	// Get branches merged into the default branch
 	cmd := exec.Command("git", "branch", "--merged", defaultBranch)
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -276,6 +285,7 @@ func selectBranchesWithFzf(branches []string) ([]string, error) {
 
 func deleteBranch(branch string) error {
 	cmd := exec.Command("git", "branch", "-d", branch)
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	output, err := cmd.CombinedOutput()
 	
 	// If safe delete fails, the branch might have unmerged commits
@@ -283,6 +293,7 @@ func deleteBranch(branch string) error {
 	if err != nil {
 		// Try force delete
 		cmd = exec.Command("git", "branch", "-D", branch)
+		cmd.Env = append(os.Environ(), "LC_ALL=C")
 		output, err = cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("%s", string(output))
