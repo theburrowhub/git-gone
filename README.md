@@ -5,7 +5,10 @@ A Go application for cleaning up merged git branches interactively using fuzzy f
 ## Features
 
 - 🔄 Updates all local references with origin
-- 🎯 Identifies branches that have been merged (excluding the default branch)
+- 🎯 Detects branches ready for deletion using multiple methods:
+  - Branches merged into the default branch (traditional merge)
+  - Branches with deleted remotes (squash/rebase merges)
+  - Supports both English and Spanish git messages
 - 🔍 Interactive multi-selection using go-fzf
 - ✅ Safe deletion with confirmation prompt
 - 📊 Clear status indicators throughout the process
@@ -41,14 +44,17 @@ gitcleaner
 ```
 
 The application will:
-1. Update all remote references
+1. Update all remote references (`git fetch --all --prune`)
 2. Identify the default branch (main/master)
-3. Find all branches merged into the default branch
+3. Find deletable branches using two methods:
+   - Branches merged into the default branch (traditional merges)
+   - Branches whose remote tracking branch is gone (squash/rebase merges)
 4. Present an interactive list where you can:
    - Use arrow keys to navigate
    - Press `Tab` or `Space` to select/deselect branches
    - Press `Enter` to confirm selection
    - Press `Esc` to cancel
+   - Type to filter branches by name
 5. Ask for confirmation before deleting selected branches
 6. Delete the selected branches safely
 
