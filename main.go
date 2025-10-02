@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -12,6 +13,13 @@ import (
 	"github.com/koki-develop/go-fzf"
 )
 
+// Version information - set during build with ldflags
+var (
+	Version    = "dev"
+	CommitHash = "unknown"
+	BuildTime  = "unknown"
+)
+
 type Branch struct {
 	Name      string
 	IsMerged  bool
@@ -20,6 +28,25 @@ type Branch struct {
 }
 
 func main() {
+	// Parse command line flags
+	versionFlag := flag.Bool("version", false, "Show version information")
+	helpFlag := flag.Bool("help", false, "Show help message")
+	flag.Parse()
+
+	// Handle version flag
+	if *versionFlag {
+		fmt.Printf("GitCleaner %s\n", Version)
+		fmt.Printf("Commit: %s\n", CommitHash)
+		fmt.Printf("Built: %s\n", BuildTime)
+		return
+	}
+
+	// Handle help flag
+	if *helpFlag {
+		printHelp()
+		return
+	}
+
 	// Check if we're in a git repository
 	if err := checkGitRepository(); err != nil {
 		log.Fatal("❌ Not in a git repository")
@@ -301,4 +328,40 @@ func deleteBranch(branch string) error {
 	}
 	
 	return nil
+}
+
+func printHelp() {
+	fmt.Println(`GitCleaner - Clean up merged git branches interactively
+
+Usage:
+    gitcleaner [OPTIONS]
+
+Options:
+    --help      Show this help message
+    --version   Show version information
+
+Description:
+    GitCleaner helps you clean up local git branches that have been merged
+    or whose remote tracking branches have been deleted.
+
+    The tool will:
+    1. Update all remote references
+    2. Find branches that are merged or have deleted remotes
+    3. Show an interactive selector to choose branches to delete
+    4. Confirm before deletion
+    5. Safely delete selected branches
+
+Interactive Controls:
+    ↑/↓         Navigate through the list
+    Tab/Space   Toggle selection
+    Enter       Confirm selection
+    Esc         Cancel operation
+    Type        Filter branches by name
+
+Examples:
+    gitcleaner              # Run in the current repository
+    gitcleaner --version    # Show version
+    gitcleaner --help       # Show this help
+
+For more information, visit: https://github.com/YOUR_USERNAME/gitcleaner`)
 }
