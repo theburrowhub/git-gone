@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"github.com/koki-develop/go-fzf"
@@ -43,27 +44,56 @@ func main() {
 	}
 	fmt.Printf("🌿 Current branch: %s\n", currentBranch)
 
+	// Get branches to delete (both merged and gone remotes)
+	goneBranches, err := getGoneBranches()
+	if err != nil {
+		fmt.Printf("⚠️  Warning: Failed to get gone branches: %v\n", err)
+		goneBranches = []string{}
+	}
+
 	// Get merged branches
 	mergedBranches, err := getMergedBranches(defaultBranch)
 	if err != nil {
-		log.Fatalf("❌ Failed to get merged branches: %v", err)
+		fmt.Printf("⚠️  Warning: Failed to get merged branches: %v\n", err)
+		mergedBranches = []string{}
 	}
 
-	// Filter out default branch and current branch
-	var branchesToDelete []string
+	// Combine and deduplicate branches
+	branchMap := make(map[string]bool)
+	for _, branch := range goneBranches {
+		branch = strings.TrimSpace(branch)
+		if branch != defaultBranch && branch != currentBranch && branch != "" {
+			branchMap[branch] = true
+		}
+	}
 	for _, branch := range mergedBranches {
 		branch = strings.TrimSpace(branch)
 		if branch != defaultBranch && branch != currentBranch && branch != "" {
-			branchesToDelete = append(branchesToDelete, branch)
+			branchMap[branch] = true
 		}
 	}
 
+	// Convert map to slice
+	var branchesToDelete []string
+	for branch := range branchMap {
+		branchesToDelete = append(branchesToDelete, branch)
+	}
+
 	if len(branchesToDelete) == 0 {
-		fmt.Println("✅ No merged branches to delete")
+		fmt.Println("✅ No branches to delete (all branches are either active or unmerged)")
 		return
 	}
 
-	fmt.Printf("\n🔍 Found %d merged branches (excluding default and current):\n", len(branchesToDelete))
+	// Sort branches for better display
+	sort.Strings(branchesToDelete)
+
+	fmt.Printf("\n🔍 Found %d deletable branches:\n", len(branchesToDelete))
+	if len(goneBranches) > 0 {
+		fmt.Printf("   • %d branches with deleted remotes\n", len(goneBranches))
+	}
+	if len(mergedBranches) > 0 {
+		fmt.Printf("   • %d branches merged into %s\n", len(mergedBranches), defaultBranch)
+	}
 	
 	// Use go-fzf for selection
 	selectedBranches, err := selectBranchesWithFzf(branchesToDelete)
@@ -164,6 +194,29 @@ func getCurrentBranch() (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(output)), nil
+}
+
+func getGoneBranches() ([]string, error) {
+	// Get branches whose remote tracking branch is gone
+	cmd := exec.Command("git", "branch", "--format", "%(refname:short) %(upstream:track)")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var branches []string
+	for _, line := range lines {
+		// Check if the branch has [gone] or [desaparecido] (Spanish)
+		if strings.Contains(line, "[gone]") || strings.Contains(line, "[desaparecido]") {
+			// Extract branch name (first word)
+			parts := strings.Fields(line)
+			if len(parts) > 0 {
+				branches = append(branches, parts[0])
+			}
+		}
+	}
+	return branches, nil
 }
 
 func getMergedBranches(defaultBranch string) ([]string, error) {
