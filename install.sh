@@ -57,7 +57,8 @@ detect_installation_mode() {
 }
 
 get_latest_release() {
-    local api_url="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest"
+    local repo_to_check="${1:-$REPO_NAME}"
+    local api_url="https://api.github.com/repos/${REPO_OWNER}/${repo_to_check}/releases/latest"
     local release_info
     
     if command -v curl &> /dev/null; then
@@ -158,22 +159,21 @@ download_and_install_remote() {
     local actual_binary_prefix="${BINARY_NAME}"
     
     # Try with new repo name first
-    if ! version=$(get_latest_release); then
-        print_info "No releases found for ${REPO_NAME}, checking legacy name ${OLD_REPO_NAME}..."
+    if version=$(get_latest_release "${REPO_NAME}"); then
+        # Found releases in git-gone repo
+        # Check if binaries still use old name (gitcleaner) - common during migration
+        actual_binary_prefix="${OLD_BINARY_NAME}"
+        print_info "Found release ${version} in ${REPO_NAME} repository"
+    elif version=$(get_latest_release "${OLD_REPO_NAME}"); then
         # Try with old repo name for backward compatibility
-        local old_repo="${REPO_NAME}"
-        REPO_NAME="${OLD_REPO_NAME}"
-        if ! version=$(get_latest_release); then
-            REPO_NAME="${old_repo}"  # Restore original
-            print_warning "No GitHub releases found"
-            print_info "Falling back to building from source..."
-            build_from_remote_source
-            return
-        fi
-        # Use old repo and binary names for releases
+        print_info "No releases found for ${REPO_NAME}, using legacy repository ${OLD_REPO_NAME}..."
         actual_repo_name="${OLD_REPO_NAME}"
         actual_binary_prefix="${OLD_BINARY_NAME}"
-        REPO_NAME="${old_repo}"  # Restore original for consistency
+    else
+        print_warning "No GitHub releases found"
+        print_info "Falling back to building from source..."
+        build_from_remote_source
+        return
     fi
     
     local platform=$(detect_platform)
