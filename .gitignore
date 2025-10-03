@@ -19,7 +19,7 @@ go.work
 go.work.sum
 
 # Binary
-gitcleaner
+git-gone
 
 # IDE specific files
 .idea/

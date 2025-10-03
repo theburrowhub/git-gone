@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# GitCleaner Installation Script
-# This script installs gitcleaner either from local source or GitHub releases
+# git-gone Installation Script
+# This script installs git-gone either from local source or GitHub releases
 # Usage:
 #   Local:  ./install.sh
-#   Remote: curl -sSL https://raw.githubusercontent.com/theburrowhub/gitcleaner/main/install.sh | bash
+#   Remote: curl -sSL https://raw.githubusercontent.com/theburrowhub/git-gone/main/install.sh | bash
 
 set -e
 
@@ -16,9 +16,9 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-BINARY_NAME="gitcleaner"
+BINARY_NAME="git-gone"
 REPO_OWNER="theburrowhub" # TODO: Update with your GitHub username
-REPO_NAME="gitcleaner"
+REPO_NAME="git-gone"
 INSTALL_DIR="${HOME}/.local/bin"
 BACKUP_DIR="${HOME}/.local/backup"
 
@@ -41,11 +41,11 @@ print_error() {
 }
 
 detect_installation_mode() {
-    # Check if we're running from a local git repository with gitcleaner source
+    # Check if we're running from a local git repository with git-gone source
     if [ -f "go.mod" ] && [ -f "main.go" ] && [ -d ".git" ]; then
-        # Additional check: verify it's actually the gitcleaner repository
-        if grep -q "module gitcleaner" go.mod 2>/dev/null; then
-            print_info "Detected local gitcleaner repository - will build from source"
+        # Additional check: verify it's actually the git-gone repository
+        if grep -q "module git-gone" go.mod 2>/dev/null; then
+            print_info "Detected local git-gone repository - will build from source"
             return 0  # Local mode
         fi
     fi
@@ -169,8 +169,8 @@ build_and_install_local() {
     check_go_dependencies
     
     # Verify we're in the correct directory
-    if [ ! -f "go.mod" ] || ! grep -q "module gitcleaner" go.mod 2>/dev/null; then
-        print_error "Not in gitcleaner repository directory. Please run from the gitcleaner source directory."
+    if [ ! -f "go.mod" ] || ! grep -q "module git-gone" go.mod 2>/dev/null; then
+        print_error "Not in git-gone repository directory. Please run from the git-gone source directory."
     fi
     
     print_info "Building from local source..."
@@ -186,7 +186,7 @@ build_and_install_local() {
         commit_hash=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
     fi
     
-    # Build flags - gitcleaner doesn't have cmd package, so we'll use main package
+    # Build flags - git-gone doesn't have cmd package, so we'll use main package
     local ldflags="-X main.Version=${version} -X main.CommitHash=${commit_hash} -X main.BuildTime=${build_time}"
     
     print_info "Version: $version"
@@ -199,7 +199,7 @@ build_and_install_local() {
     # Build the binary
     print_info "Compiling binary..."
     if ! go build -ldflags "$ldflags" -o "${INSTALL_DIR}/${BINARY_NAME}" .; then
-        print_error "Failed to build binary. Make sure you're in the gitcleaner repository directory and Go modules are working."
+        print_error "Failed to build binary. Make sure you're in the git-gone repository directory and Go modules are working."
     fi
     
     # Make it executable
@@ -217,7 +217,7 @@ backup_existing() {
         # Get current version if possible
         local current_version="unknown"
         if [ -x "$existing_binary" ]; then
-            current_version=$("$existing_binary" --version 2>/dev/null | head -n1 | grep -oE 'GitCleaner [^ ]+' | cut -d' ' -f2 || echo "unknown")
+            current_version=$("$existing_binary" --version 2>/dev/null | head -n1 | grep -oE 'git-gone [^ ]+' | cut -d' ' -f2 || echo "unknown")
         fi
         
         mkdir -p "$BACKUP_DIR"
@@ -275,7 +275,7 @@ update_path() {
 
 show_usage() {
     cat << EOF
-GitCleaner Installation Script
+git-gone Installation Script
 
 This script automatically detects whether it's running locally or remotely:
 - Local:  Builds from source code (requires Go)
@@ -296,7 +296,7 @@ Examples:
     ./install.sh                              # Auto-detect mode
     ./install.sh -d /usr/local/bin           # Install to custom directory
     ./install.sh --force --local            # Force local build
-    curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/gitcleaner/main/install.sh | bash
+    curl -sSL https://raw.githubusercontent.com/theburrowhub/git-gone/main/install.sh | bash
 
 EOF
 }
@@ -337,7 +337,7 @@ done
 
 # Main installation process
 main() {
-    echo "🧹 GitCleaner Installation Script"
+    echo "🧹 git-gone Installation Script"
     echo "================================"
     echo ""
     
@@ -382,11 +382,11 @@ main() {
     echo ""
     print_info "Next steps:"
     echo "  1. Navigate to any git repository"
-    echo "  2. Run: gitcleaner"
+    echo "  2. Run: git gone"
     echo "  3. Select branches to delete using Tab/Space"
     echo "  4. Press Enter to confirm deletion"
     echo ""
-    print_info "For more information, run: gitcleaner --help"
+    print_info "For more information, run: git gone -h"
 }
 
 # Run main function
