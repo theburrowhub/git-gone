@@ -115,6 +115,25 @@ The tool will:
 
 When you install `git-gone`, the binary is placed in your `$PATH`. Git automatically recognizes executables named `git-<command>` as git subcommands, allowing you to use it as `git gone`.
 
+## Development
+
+### Creating a new release
+
+Releases are automatically created when you push a tag starting with `v`:
+
+```bash
+# Create a new tag
+git tag v0.3.0 -m "Release version 0.3.0"
+
+# Push the tag to GitHub
+git push origin v0.3.0
+```
+
+GitHub Actions will automatically:
+1. Build binaries for all platforms (Linux, macOS, Windows)
+2. Create a GitHub release with the binaries
+3. Generate checksums for all files
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -160,10 +160,14 @@ download_and_install_remote() {
     
     # Try with new repo name first
     if version=$(get_latest_release "${REPO_NAME}"); then
-        # Found releases in git-gone repo
-        # Check if binaries still use old name (gitcleaner) - common during migration
-        actual_binary_prefix="${OLD_BINARY_NAME}"
         print_info "Found release ${version} in ${REPO_NAME} repository"
+        # For releases <= v0.2.0, binaries still use old name (gitcleaner)
+        # For releases > v0.2.0, binaries use new name (git-gone)
+        # Check version to determine binary prefix
+        if [ "${version}" = "v0.2.0" ] || [ "${version}" = "v0.1.1" ] || [ "${version}" = "v0.1.0" ]; then
+            actual_binary_prefix="${OLD_BINARY_NAME}"
+            print_info "Using legacy binary names for ${version}"
+        fi
     elif version=$(get_latest_release "${OLD_REPO_NAME}"); then
         # Try with old repo name for backward compatibility
         print_info "No releases found for ${REPO_NAME}, using legacy repository ${OLD_REPO_NAME}..."
