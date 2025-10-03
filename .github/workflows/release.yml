@@ -179,23 +179,23 @@ jobs:
         # Build with version information
         go build \
           -ldflags "-X main.Version=${NEW_VERSION} -X main.CommitHash=${COMMIT_HASH} -X main.BuildTime=${BUILD_TIME} -s -w" \
-          -o gitcleaner-${{ matrix.suffix }} \
+          -o git-gone-${{ matrix.suffix }} \
           .
           
     - name: Create archive
       run: |
         if [[ "${{ matrix.goos }}" == "windows" ]]; then
-          zip gitcleaner-${{ matrix.suffix }}.zip gitcleaner-${{ matrix.suffix }}.exe
+          zip git-gone-${{ matrix.suffix }}.zip git-gone-${{ matrix.suffix }}.exe
         else
-          tar -czf gitcleaner-${{ matrix.suffix }}.tar.gz gitcleaner-${{ matrix.suffix }}
+          tar -czf git-gone-${{ matrix.suffix }}.tar.gz git-gone-${{ matrix.suffix }}
         fi
         
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: gitcleaner-${{ matrix.suffix }}
+        name: git-gone-${{ matrix.suffix }}
         path: |
-          gitcleaner-${{ matrix.suffix }}*
+          git-gone-${{ matrix.suffix }}*
           
   release:
     name: Create Release
@@ -217,7 +217,7 @@ jobs:
     - name: Prepare release assets
       run: |
         mkdir -p release-assets
-        find ./artifacts -name "gitcleaner-*" -type f | while read file; do
+        find ./artifacts -name "git-gone-*" -type f | while read file; do
           cp "$file" release-assets/
         done
         ls -la release-assets/
@@ -259,12 +259,12 @@ jobs:
       run: |
         # Generate checksums for the release assets
         cd release-assets
-        sha256sum gitcleaner-* > gitcleaner-checksums.txt
+        sha256sum git-gone-* > git-gone-checksums.txt
         
     - name: Upload checksums
       uses: softprops/action-gh-release@v1
       with:
         tag_name: "v${{ needs.version-bump.outputs.new_version }}"
-        files: release-assets/gitcleaner-checksums.txt
+        files: release-assets/git-gone-checksums.txt
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
