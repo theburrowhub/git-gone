@@ -1,5 +1,11 @@
 ## [0.2.0] - 2025-10-03
 
+- refactor: change bin name to be use as git plugin (#1)
+- Merge branch 'main' of github.com:theburrowhub/gitcleaner
+- chore: add MIT license
+
+## [0.2.0] - 2025-10-03
+
 - **BREAKING CHANGE**: Renamed project from `gitcleaner` to `git-gone`
 - feat: Now works as a Git plugin - can be invoked with `git gone`
 - feat: Added support for short flags `-h` and `-v` (required for Git plugin usage)
