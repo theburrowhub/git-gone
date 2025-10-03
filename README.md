@@ -20,8 +20,14 @@ Works as a native Git extension: `git gone`
 
 ```bash
 # Download and run the installation script
+# Will download pre-built binary if available, or build from source automatically
 curl -sSL https://raw.githubusercontent.com/theburrowhub/git-gone/main/install.sh | bash
 ```
+
+**Note**: The installation script will automatically:
+- Try to download pre-built releases if available
+- Fall back to building from source if no releases exist (requires Git and Go 1.19+)
+- Install the binary to `~/.local/bin` by default
 
 ### From source
 
@@ -108,6 +114,25 @@ The tool will:
 ## How it Works as a Git Plugin
 
 When you install `git-gone`, the binary is placed in your `$PATH`. Git automatically recognizes executables named `git-<command>` as git subcommands, allowing you to use it as `git gone`.
+
+## Development
+
+### Creating a new release
+
+Releases are automatically created when you push a tag starting with `v`:
+
+```bash
+# Create a new tag
+git tag v0.3.0 -m "Release version 0.3.0"
+
+# Push the tag to GitHub
+git push origin v0.3.0
+```
+
+GitHub Actions will automatically:
+1. Build binaries for all platforms (Linux, macOS, Windows)
+2. Create a GitHub release with the binaries
+3. Generate checksums for all files
 
 ## License
 
