@@ -1,8 +1,13 @@
-## [0.2.0] - 2025-10-03
+## [Unreleased]
 
-- refactor: change bin name to be use as git plugin (#1)
-- Merge branch 'main' of github.com:theburrowhub/gitcleaner
-- chore: add MIT license
+### Added
+- GitHub Actions workflows for CI/CD
+- Automatic release generation with correct binary names (git-gone)
+- Support for Windows builds in CI
+
+### Fixed
+- Installation script now handles both legacy (gitcleaner) and new (git-gone) binary names
+- Improved error handling in installation script with automatic fallback to source compilation
 
 ## [0.2.0] - 2025-10-03
 
