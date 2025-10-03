@@ -1,3 +1,11 @@
+## [0.3.0] - 2025-10-03
+
+- fix: enhance release workflow with version bump and changelog generation
+- Merge branch 'main' of github.com:theburrowhub/gitcleaner
+- chore: update release workflow to reflect binary name change from gitcleaner to git-gone
+- fix: resolve ineffassign linter error in deleteBranch function (#3)
+- fix: installation for linux fails to extract archive (#2)
+
 ## [Unreleased]
 
 ### Added
