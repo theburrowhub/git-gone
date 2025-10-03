@@ -30,11 +30,13 @@ type Branch struct {
 func main() {
 	// Parse command line flags
 	versionFlag := flag.Bool("version", false, "Show version information")
+	versionFlagShort := flag.Bool("v", false, "Show version information")
 	helpFlag := flag.Bool("help", false, "Show help message")
+	helpFlagShort := flag.Bool("h", false, "Show help message")
 	flag.Parse()
 
 	// Handle version flag
-	if *versionFlag {
+	if *versionFlag || *versionFlagShort {
 		fmt.Printf("git-gone %s\n", Version)
 		fmt.Printf("Commit: %s\n", CommitHash)
 		fmt.Printf("Built: %s\n", BuildTime)
@@ -42,7 +44,7 @@ func main() {
 	}
 
 	// Handle help flag
-	if *helpFlag {
+	if *helpFlag || *helpFlagShort {
 		printHelp()
 		return
 	}
@@ -338,8 +340,8 @@ Usage:
     git-gone [OPTIONS]
 
 Options:
-    --help      Show this help message
-    --version   Show version information
+    -h, --help      Show this help message
+    -v, --version   Show version information
 
 Description:
     git-gone helps you clean up local git branches that have been merged
@@ -361,8 +363,9 @@ Interactive Controls:
 
 Examples:
     git gone              # Run in the current repository
-    git-gone --version    # Show version
-    git gone --help       # Show this help
+    git gone -h           # Show this help (use -h with git command)
+    git-gone --help       # Show help with standalone command
+    git-gone -v           # Show version
 
 For more information, visit: https://github.com/theburrowhub/git-gone`)
 }

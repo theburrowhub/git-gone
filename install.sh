@@ -386,7 +386,7 @@ main() {
     echo "  3. Select branches to delete using Tab/Space"
     echo "  4. Press Enter to confirm deletion"
     echo ""
-    print_info "For more information, run: git gone --help"
+    print_info "For more information, run: git gone -h"
 }
 
 # Run main function

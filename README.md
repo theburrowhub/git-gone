@@ -71,6 +71,13 @@ The tool will:
 5. Ask for confirmation before deleting selected branches
 6. Delete the selected branches safely
 
+## Command Options
+
+- `-h`, `--help`: Show help message
+- `-v`, `--version`: Show version information
+
+**Note**: When using as a Git plugin (`git gone`), use `-h` instead of `--help` to show the help message, as Git intercepts `--help` to search for man pages.
+
 ## Interactive Controls
 
 - **↑/↓**: Navigate through the list
