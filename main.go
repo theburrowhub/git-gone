@@ -15,7 +15,7 @@ import (
 
 // Version information - set during build with ldflags
 var (
-	Version    = "0.1.0"
+	Version    = "0.2.0"
 	CommitHash = "unknown"
 	BuildTime  = "unknown"
 )
@@ -35,7 +35,7 @@ func main() {
 
 	// Handle version flag
 	if *versionFlag {
-		fmt.Printf("GitCleaner %s\n", Version)
+		fmt.Printf("git-gone %s\n", Version)
 		fmt.Printf("Commit: %s\n", CommitHash)
 		fmt.Printf("Built: %s\n", BuildTime)
 		return
@@ -331,17 +331,18 @@ func deleteBranch(branch string) error {
 }
 
 func printHelp() {
-	fmt.Println(`GitCleaner - Clean up merged git branches interactively
+	fmt.Println(`git-gone - Clean up merged git branches interactively
 
 Usage:
-    gitcleaner [OPTIONS]
+    git gone [OPTIONS]
+    git-gone [OPTIONS]
 
 Options:
     --help      Show this help message
     --version   Show version information
 
 Description:
-    GitCleaner helps you clean up local git branches that have been merged
+    git-gone helps you clean up local git branches that have been merged
     or whose remote tracking branches have been deleted.
 
     The tool will:
@@ -359,9 +360,9 @@ Interactive Controls:
     Type        Filter branches by name
 
 Examples:
-    gitcleaner              # Run in the current repository
-    gitcleaner --version    # Show version
-    gitcleaner --help       # Show this help
+    git gone              # Run in the current repository
+    git-gone --version    # Show version
+    git gone --help       # Show this help
 
-For more information, visit: https://github.com/YOUR_USERNAME/gitcleaner`)
+For more information, visit: https://github.com/theburrowhub/git-gone`)
 }

@@ -1,6 +1,7 @@
-# GitCleaner
+# git-gone
 
-A Go application for cleaning up merged git branches interactively using fuzzy finder.
+A Git plugin for cleaning up merged git branches interactively using fuzzy finder.
+Works as a native Git extension: `git gone`
 
 ## Features
 
@@ -19,37 +20,43 @@ A Go application for cleaning up merged git branches interactively using fuzzy f
 
 ```bash
 # Download and run the installation script
-curl -sSL https://raw.githubusercontent.com/theburrowhub/gitcleaner/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/theburrowhub/git-gone/main/install.sh | bash
 ```
 
 ### From source
 
 ```bash
 # Clone the repository
-git clone https://github.com/theburrowhub/gitcleaner.git
-cd gitcleaner
+git clone https://github.com/theburrowhub/git-gone.git
+cd git-gone
 
 # Use the installation script for local build
 ./install.sh
 
 # Or build manually
-go build -o gitcleaner
-sudo mv gitcleaner /usr/local/bin/
+go build -o git-gone
+sudo mv git-gone /usr/local/bin/
 ```
 
 ### Download binary
 
-Download the latest release from the [releases page](https://github.com/theburrowhub/gitcleaner/releases) for your platform.
+Download the latest release from the [releases page](https://github.com/theburrowhub/git-gone/releases) for your platform.
 
 ## Usage
 
 Navigate to any git repository and run:
 
 ```bash
-gitcleaner
+git gone
 ```
 
-The application will:
+Or use the standalone command:
+
+```bash
+git-gone
+```
+
+The tool will:
 1. Update all remote references (`git fetch --all --prune`)
 2. Identify the default branch (main/master)
 3. Find deletable branches using two methods:
@@ -90,6 +97,10 @@ The application will:
 ## Dependencies
 
 - [github.com/koki-develop/go-fzf](https://github.com/koki-develop/go-fzf) - Fuzzy finder library
+
+## How it Works as a Git Plugin
+
+When you install `git-gone`, the binary is placed in your `$PATH`. Git automatically recognizes executables named `git-<command>` as git subcommands, allowing you to use it as `git gone`.
 
 ## License
 

@@ -1,3 +1,10 @@
+## [0.2.0] - 2025-10-03
+
+- **BREAKING CHANGE**: Renamed project from `gitcleaner` to `git-gone`
+- feat: Now works as a Git plugin - can be invoked with `git gone`
+- refactor: Updated all references throughout the codebase
+- docs: Updated documentation to reflect new name and usage
+
 ## [0.1.1] - 2025-10-02
 
 - Merge branch 'main' of github.com:theburrowhub/gitcleaner

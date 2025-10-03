@@ -1,4 +1,4 @@
-module gitcleaner
+module git-gone
 
 go 1.19
 
