@@ -17,8 +17,10 @@ NC='\033[0m' # No Color
 
 # Configuration
 BINARY_NAME="git-gone"
+OLD_BINARY_NAME="gitcleaner"  # For backward compatibility with existing releases
 REPO_OWNER="theburrowhub" # TODO: Update with your GitHub username
 REPO_NAME="git-gone"
+OLD_REPO_NAME="gitcleaner"  # For backward compatibility
 INSTALL_DIR="${HOME}/.local/bin"
 BACKUP_DIR="${HOME}/.local/backup"
 
@@ -66,13 +68,19 @@ get_latest_release() {
         print_error "Neither curl nor wget is available. Please install one of them."
     fi
     
+    # Check if we got a 404 or other error (GitHub returns JSON with "message" field for errors)
+    if echo "$release_info" | grep -q '"message".*"Not Found"'; then
+        return 1  # No releases found
+    fi
+    
     local tag_name=$(echo "$release_info" | grep '"tag_name":' | sed -E 's/.*"tag_name": "([^"]+)".*/\1/' 2>/dev/null)
     
     if [ -z "$tag_name" ]; then
-        print_error "Failed to get latest release information"
+        return 1  # Failed to parse release
     fi
     
     echo "$tag_name"
+    return 0
 }
 
 detect_platform() {
@@ -106,12 +114,71 @@ detect_platform() {
     echo "${os}-${arch}"
 }
 
+build_from_remote_source() {
+    print_info "No pre-built releases found. Installing from source..."
+    
+    # Check for git
+    if ! command -v git &> /dev/null; then
+        print_error "Git is not installed. Please install Git to continue."
+    fi
+    
+    # Check for Go
+    if ! command -v go &> /dev/null; then
+        print_error "Go is not installed. Please install Go 1.19 or later to build from source."
+    fi
+    
+    # Create temporary directory
+    local temp_dir=$(mktemp -d)
+    cd "$temp_dir"
+    
+    print_info "Cloning repository..."
+    if ! git clone "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" .; then
+        print_error "Failed to clone repository"
+    fi
+    
+    print_info "Building from source..."
+    mkdir -p "$INSTALL_DIR"
+    if ! go build -o "${INSTALL_DIR}/${BINARY_NAME}" .; then
+        print_error "Failed to build binary. Make sure Go 1.19 or later is installed."
+    fi
+    
+    chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
+    
+    # Cleanup
+    cd - > /dev/null
+    rm -rf "$temp_dir"
+    
+    print_success "Built and installed from remote source"
+}
+
 download_and_install_remote() {
     print_info "Fetching latest release information..."
-    local version=$(get_latest_release)
+    local version
+    local actual_repo_name="${REPO_NAME}"
+    local actual_binary_prefix="${BINARY_NAME}"
+    
+    # Try with new repo name first
+    if ! version=$(get_latest_release); then
+        print_info "No releases found for ${REPO_NAME}, checking legacy name ${OLD_REPO_NAME}..."
+        # Try with old repo name for backward compatibility
+        local old_repo="${REPO_NAME}"
+        REPO_NAME="${OLD_REPO_NAME}"
+        if ! version=$(get_latest_release); then
+            REPO_NAME="${old_repo}"  # Restore original
+            print_warning "No GitHub releases found"
+            print_info "Falling back to building from source..."
+            build_from_remote_source
+            return
+        fi
+        # Use old repo and binary names for releases
+        actual_repo_name="${OLD_REPO_NAME}"
+        actual_binary_prefix="${OLD_BINARY_NAME}"
+        REPO_NAME="${old_repo}"  # Restore original for consistency
+    fi
+    
     local platform=$(detect_platform)
-    local archive_name="${BINARY_NAME}-${platform}.tar.gz"
-    local download_url="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${version}/${archive_name}"
+    local archive_name="${actual_binary_prefix}-${platform}.tar.gz"
+    local download_url="https://github.com/${REPO_OWNER}/${actual_repo_name}/releases/download/${version}/${archive_name}"
     local temp_dir=$(mktemp -d)
     
     print_info "Downloading ${BINARY_NAME} ${version} for ${platform}..."
@@ -119,21 +186,53 @@ download_and_install_remote() {
     
     # Download the archive
     if command -v curl &> /dev/null; then
-        curl -sSL "$download_url" -o "${temp_dir}/${archive_name}" || print_error "Failed to download ${archive_name}"
+        if ! curl -sSL -f "$download_url" -o "${temp_dir}/${archive_name}"; then
+            print_warning "Failed to download pre-built binary (404 or network error)"
+            print_info "Falling back to building from source..."
+            rm -rf "$temp_dir"
+            build_from_remote_source
+            return
+        fi
     elif command -v wget &> /dev/null; then
-        wget -q "$download_url" -O "${temp_dir}/${archive_name}" || print_error "Failed to download ${archive_name}"
+        if ! wget -q "$download_url" -O "${temp_dir}/${archive_name}"; then
+            print_warning "Failed to download pre-built binary (404 or network error)"
+            print_info "Falling back to building from source..."
+            rm -rf "$temp_dir"
+            build_from_remote_source
+            return
+        fi
     else
         print_error "Neither curl nor wget is available. Please install one of them."
     fi
     
+    # Check if the downloaded file is a valid gzip file
+    if ! file "${temp_dir}/${archive_name}" | grep -q "gzip"; then
+        print_warning "Downloaded file is not a valid archive"
+        print_info "Falling back to building from source..."
+        rm -rf "$temp_dir"
+        build_from_remote_source
+        return
+    fi
+    
     print_info "Extracting archive..."
     cd "$temp_dir"
-    tar -xzf "$archive_name" || print_error "Failed to extract archive"
+    if ! tar -xzf "$archive_name"; then
+        print_warning "Failed to extract archive"
+        print_info "Falling back to building from source..."
+        cd - > /dev/null
+        rm -rf "$temp_dir"
+        build_from_remote_source
+        return
+    fi
     
     # Find the binary (it might be named differently in the archive)
-    local binary_path=$(find . -name "${BINARY_NAME}-${platform}" -type f | head -n1)
+    local binary_path=$(find . -name "${actual_binary_prefix}-${platform}" -type f | head -n1)
     if [ -z "$binary_path" ]; then
-        print_error "Binary not found in archive"
+        # Try with old name pattern
+        binary_path=$(find . -name "${OLD_BINARY_NAME}-${platform}" -type f | head -n1)
+        if [ -z "$binary_path" ]; then
+            print_error "Binary not found in archive"
+        fi
     fi
     
     print_info "Installing binary to ${INSTALL_DIR}..."
@@ -279,7 +378,7 @@ git-gone Installation Script
 
 This script automatically detects whether it's running locally or remotely:
 - Local:  Builds from source code (requires Go)
-- Remote: Downloads latest release from GitHub
+- Remote: Downloads latest release from GitHub (or builds from source if no releases)
 
 Usage: 
     ./install.sh [OPTIONS]                    # Local installation
