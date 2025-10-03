@@ -315,7 +315,7 @@ func selectBranchesWithFzf(branches []string) ([]string, error) {
 func deleteBranch(branch string) error {
 	cmd := exec.Command("git", "branch", "-d", branch)
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
-	output, err := cmd.CombinedOutput()
+	err := cmd.Run()
 
 	// If safe delete fails, the branch might have unmerged commits
 	// but we already know it's merged to default branch
@@ -323,7 +323,7 @@ func deleteBranch(branch string) error {
 		// Try force delete
 		cmd = exec.Command("git", "branch", "-D", branch)
 		cmd.Env = append(os.Environ(), "LC_ALL=C")
-		output, err = cmd.CombinedOutput()
+		output, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("%s", string(output))
 		}
