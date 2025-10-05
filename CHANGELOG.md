@@ -1,3 +1,7 @@
+## [0.4.0] - 2025-10-05
+
+- feat: add cobra for flag management and include forced delete (#4)
+
 ## [0.3.0] - 2025-10-03
 
 - fix: enhance release workflow with version bump and changelog generation
