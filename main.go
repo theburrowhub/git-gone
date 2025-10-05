@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/koki-develop/go-fzf"
+	"github.com/spf13/cobra"
 )
 
 // Version information - set during build with ldflags
@@ -27,27 +27,53 @@ type Branch struct {
 	IsLocal   bool
 }
 
+var rootCmd = &cobra.Command{
+	Use:   "git-gone",
+	Short: "Clean up merged git branches interactively",
+	Long: `git-gone - Clean up merged git branches interactively
+
+git-gone helps you clean up local git branches that have been merged
+or whose remote tracking branches have been deleted.
+
+The tool will:
+  1. Update all remote references
+  2. Find branches that are merged or have deleted remotes
+  3. Show an interactive selector to choose branches to delete
+  4. Confirm before deletion
+  5. Safely delete selected branches
+
+Interactive Controls:
+  ↑/↓         Navigate through the list
+  Tab/Space   Toggle selection
+  Enter       Confirm selection
+  Esc         Cancel operation
+  Type        Filter branches by name`,
+	Example: `  # Run in the current repository
+  git gone
+
+  # Show help (use -h with git command)
+  git gone -h
+
+  # Show version
+  git-gone -v`,
+	Version: Version,
+	Run: func(cmd *cobra.Command, args []string) {
+		runCleanup()
+	},
+}
+
+func init() {
+	// Set custom version template
+	rootCmd.SetVersionTemplate(fmt.Sprintf("git-gone %s\nCommit: %s\nBuilt: %s\n", Version, CommitHash, BuildTime))
+}
+
 func main() {
-	// Parse command line flags
-	versionFlag := flag.Bool("version", false, "Show version information")
-	versionFlagShort := flag.Bool("v", false, "Show version information")
-	helpFlag := flag.Bool("help", false, "Show help message")
-	helpFlagShort := flag.Bool("h", false, "Show help message")
-	flag.Parse()
-
-	// Handle version flag
-	if *versionFlag || *versionFlagShort {
-		fmt.Printf("git-gone %s\n", Version)
-		fmt.Printf("Commit: %s\n", CommitHash)
-		fmt.Printf("Built: %s\n", BuildTime)
-		return
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
 	}
+}
 
-	// Handle help flag
-	if *helpFlag || *helpFlagShort {
-		printHelp()
-		return
-	}
+func runCleanup() {
 
 	// Check if we're in a git repository
 	if err := checkGitRepository(); err != nil {
@@ -330,42 +356,4 @@ func deleteBranch(branch string) error {
 	}
 
 	return nil
-}
-
-func printHelp() {
-	fmt.Println(`git-gone - Clean up merged git branches interactively
-
-Usage:
-    git gone [OPTIONS]
-    git-gone [OPTIONS]
-
-Options:
-    -h, --help      Show this help message
-    -v, --version   Show version information
-
-Description:
-    git-gone helps you clean up local git branches that have been merged
-    or whose remote tracking branches have been deleted.
-
-    The tool will:
-    1. Update all remote references
-    2. Find branches that are merged or have deleted remotes
-    3. Show an interactive selector to choose branches to delete
-    4. Confirm before deletion
-    5. Safely delete selected branches
-
-Interactive Controls:
-    ↑/↓         Navigate through the list
-    Tab/Space   Toggle selection
-    Enter       Confirm selection
-    Esc         Cancel operation
-    Type        Filter branches by name
-
-Examples:
-    git gone              # Run in the current repository
-    git gone -h           # Show this help (use -h with git command)
-    git-gone --help       # Show help with standalone command
-    git-gone -v           # Show version
-
-For more information, visit: https://github.com/theburrowhub/git-gone`)
 }
