@@ -231,7 +231,7 @@ backup_existing() {
         # Get current version if possible
         local current_version="unknown"
         if [ -x "$existing_binary" ]; then
-            current_version=$("$existing_binary" --version 2>/dev/null | head -n1 | grep -oE 'git-gone [^ ]+' | cut -d' ' -f2 || echo "unknown")
+            current_version=$("$existing_binary" version 2>/dev/null | head -n1 || echo "unknown")
         fi
         
         mkdir -p "$BACKUP_DIR"
@@ -261,7 +261,7 @@ verify_installation() {
     
     # Test the binary
     local version_output
-    if version_output=$("$installed_binary" --version 2>&1); then
+    if version_output=$("$installed_binary" version 2>&1); then
         print_success "Installation verified"
         echo "$version_output"
     else
