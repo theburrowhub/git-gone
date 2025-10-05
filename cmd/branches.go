@@ -34,7 +34,7 @@ This command will:
 
 Interactive Controls:
   ↑/↓         Navigate through the list
-  Tab/Space   Toggle selection
+  Tab         Toggle selection
   Enter       Confirm selection
   Esc         Cancel operation
   Type        Filter branches by name`,
@@ -161,9 +161,7 @@ func runCleanup() {
 			fmt.Println("❌ Deletion cancelled")
 			return
 		}
-	} else {
-		fmt.Println("\n⚡ Force mode enabled - skipping confirmation")
-	}
+	} 
 
 	// Delete selected branches
 	deletedCount := 0
