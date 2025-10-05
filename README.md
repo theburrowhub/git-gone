@@ -50,19 +50,25 @@ Download the latest release from the [releases page](https://github.com/theburro
 
 ## Usage
 
+### Basic Usage
+
 Navigate to any git repository and run:
 
 ```bash
 git gone
-```
-
-Or use the standalone command:
-
-```bash
+# or
 git-gone
+# or explicitly
+git-gone branches
 ```
 
-The tool will:
+### Available Commands
+
+- **`git-gone` or `git-gone branches`**: Clean up merged branches (default)
+- **`git-gone version`**: Show version information
+- **`git-gone help`**: Show help information
+
+### What the tool does:
 1. Update all remote references (`git fetch --all --prune`)
 2. Identify the default branch (main/master)
 3. Find deletable branches using two methods:
@@ -77,12 +83,30 @@ The tool will:
 5. Ask for confirmation before deleting selected branches
 6. Delete the selected branches safely
 
-## Command Options
+## Command Structure
 
-- `-h`, `--help`: Show help message
-- `-v`, `--version`: Show version information
+git-gone uses a subcommand structure powered by Cobra:
 
-**Note**: When using as a Git plugin (`git gone`), use `-h` instead of `--help` to show the help message, as Git intercepts `--help` to search for man pages.
+```bash
+# Show general help
+git-gone --help
+git-gone -h
+
+# Show version
+git-gone version
+
+# Clean branches (default command)
+git-gone
+git-gone branches
+
+# Get help for specific command
+git-gone branches --help
+```
+
+**Note**: When using as a Git plugin (`git gone`), commands work the same way:
+- `git gone` - runs branch cleanup
+- `git gone version` - shows version
+- `git gone -h` - shows help
 
 ## Interactive Controls
 
