@@ -1,3 +1,7 @@
+## [0.4.1] - 2025-10-05
+
+- ci: fix actions (#5)
+
 ## [0.4.0] - 2025-10-05
 
 - feat: add cobra for flag management and include forced delete (#4)
