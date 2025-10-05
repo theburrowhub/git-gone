@@ -33,9 +33,9 @@ jobs:
     
     - name: Test build with version info
       run: |
-        go build -ldflags "-X main.Version=test -X main.CommitHash=test -X main.BuildTime=test" -o git-gone .
-        ./git-gone -v
-        ./git-gone -h
+        go build -ldflags "-X git-gone/cmd.Version=test -X git-gone/cmd.CommitHash=test -X git-gone/cmd.BuildTime=test" -o git-gone .
+        ./git-gone version
+        ./git-gone --help
     
     - name: Verify binary name
       run: |

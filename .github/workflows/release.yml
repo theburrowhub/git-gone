@@ -178,7 +178,7 @@ jobs:
         
         # Build with version information
         go build \
-          -ldflags "-X main.Version=${NEW_VERSION} -X main.CommitHash=${COMMIT_HASH} -X main.BuildTime=${BUILD_TIME} -s -w" \
+          -ldflags "-X git-gone/cmd.Version=${NEW_VERSION} -X git-gone/cmd.CommitHash=${COMMIT_HASH} -X git-gone/cmd.BuildTime=${BUILD_TIME} -s -w" \
           -o git-gone-${{ matrix.suffix }} \
           .
           
