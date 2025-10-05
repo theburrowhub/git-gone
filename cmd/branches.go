@@ -20,6 +20,10 @@ type Branch struct {
 	IsLocal   bool
 }
 
+var (
+	forceDelete bool
+)
+
 var branchesCmd = &cobra.Command{
 	Use:   "branches",
 	Short: "Clean up merged branches interactively",
@@ -29,7 +33,7 @@ This command will:
   1. Update all remote references
   2. Find branches that are merged or have deleted remotes
   3. Show an interactive selector to choose branches to delete
-  4. Confirm before deletion
+  4. Confirm before deletion (unless --force is used)
   5. Safely delete selected branches
 
 Interactive Controls:
@@ -42,10 +46,18 @@ Interactive Controls:
   git-gone branches
 
   # Or simply (branches is the default command)
-  git gone`,
+  git gone
+
+  # Skip confirmation prompt
+  git-gone branches --force
+  git gone -f`,
 	Run: func(cmd *cobra.Command, args []string) {
 		runCleanup()
 	},
+}
+
+func init() {
+	branchesCmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "Skip confirmation prompt and delete selected branches immediately")
 }
 
 func runCleanup() {
@@ -139,20 +151,25 @@ func runCleanup() {
 		return
 	}
 
-	// Confirm deletion
+	// Show branches to delete
 	fmt.Printf("\n⚠️  The following branches will be deleted:\n")
 	for _, branch := range selectedBranches {
 		fmt.Printf("  • %s\n", branch)
 	}
 
-	fmt.Print("\nAre you sure you want to delete these branches? (y/N): ")
-	reader := bufio.NewReader(os.Stdin)
-	response, _ := reader.ReadString('\n')
-	response = strings.TrimSpace(strings.ToLower(response))
+	// Confirm deletion (unless --force is used)
+	if !forceDelete {
+		fmt.Print("\nAre you sure you want to delete these branches? (y/N): ")
+		reader := bufio.NewReader(os.Stdin)
+		response, _ := reader.ReadString('\n')
+		response = strings.TrimSpace(strings.ToLower(response))
 
-	if response != "y" && response != "yes" {
-		fmt.Println("❌ Deletion cancelled")
-		return
+		if response != "y" && response != "yes" {
+			fmt.Println("❌ Deletion cancelled")
+			return
+		}
+	} else {
+		fmt.Println("\n⚡ Force mode enabled - skipping confirmation")
 	}
 
 	// Delete selected branches
