@@ -52,7 +52,6 @@ Interactive Controls:
 	},
 }
 
-
 func runCleanup() {
 	// Check if we're in a git repository
 	if err := checkGitRepository(); err != nil {
@@ -161,7 +160,7 @@ func runCleanup() {
 			fmt.Println("❌ Deletion cancelled")
 			return
 		}
-	} 
+	}
 
 	// Delete selected branches
 	deletedCount := 0
