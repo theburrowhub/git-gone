@@ -228,10 +228,17 @@ backup_existing() {
     if [ -f "$existing_binary" ]; then
         print_info "Backing up existing installation..."
         
-        # Get current version if possible
+        # Get current version if possible (try new format first, then old)
         local current_version="unknown"
         if [ -x "$existing_binary" ]; then
-            current_version=$("$existing_binary" --version 2>/dev/null | head -n1 | grep -oE 'git-gone [^ ]+' | cut -d' ' -f2 || echo "unknown")
+            # Try new format (version subcommand) - should output just version number
+            local new_format=$("$existing_binary" version 2>/dev/null | head -n1)
+            if echo "$new_format" | grep -qE '^[v]?[0-9]+\.[0-9]+'; then
+                current_version="$new_format"
+            else
+                # Try old format (--version flag) - extract version from output
+                current_version=$("$existing_binary" --version 2>/dev/null | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
+            fi
         fi
         
         mkdir -p "$BACKUP_DIR"
@@ -259,9 +266,16 @@ verify_installation() {
         print_error "Installation failed: binary is not executable"
     fi
     
-    # Test the binary
+    # Test the binary (try new format first, fallback to old)
     local version_output
-    if version_output=$("$installed_binary" --version 2>&1); then
+    version_output=$("$installed_binary" version 2>/dev/null)
+    
+    # If new format fails, try old format for backward compatibility
+    if [ -z "$version_output" ]; then
+        version_output=$("$installed_binary" --version 2>/dev/null)
+    fi
+    
+    if [ -n "$version_output" ]; then
         print_success "Installation verified"
         echo "$version_output"
     else

@@ -1,6 +1,6 @@
 # GitHub Actions Workflows
 
-This directory contains the CI/CD workflows for gitcleaner.
+This directory contains the CI/CD workflows for git-gone.
 
 ## Workflows
 
@@ -15,31 +15,43 @@ This directory contains the CI/CD workflows for gitcleaner.
 - Coverage reporting to Codecov
 - Check `go mod tidy` status
 
+**Purpose**: Validate code quality before merging PRs.
+
+---
+
 ### 2. Release and Build (`release.yml`)
 **Trigger**: Push to `main` branch
 
 **Actions performed**:
-- Calculate next semantic version using conventional commits
-- Update version in `main.go`
-- Update `CHANGELOG.md` with new release notes
-- Commit version bump changes
-- Create and push git tag for the new version
-- Build binaries for multiple platforms:
-  - Linux (amd64, arm64)
-  - macOS (amd64, arm64)
-- Create compressed archives for each platform
-- Generate SHA256 checksums
-- Create GitHub release with all artifacts
-- Extract changelog from `CHANGELOG.md` for release notes
+1. **Version Bump**:
+   - Calculate next semantic version using conventional commits
+   - Update version in code
+   - Update `CHANGELOG.md` with new release notes
+   - Commit version bump changes
+   - Create and push git tag
+
+2. **Build Binaries**:
+   - Build for multiple platforms:
+     - Linux (amd64, arm64)
+     - macOS (amd64, arm64)
+   - Inject version information with ldflags
+   - Create compressed archives
+
+3. **Create Release**:
+   - Generate SHA256 checksums
+   - Create GitHub release with all artifacts
+   - Extract changelog for release notes
 
 **Requirements**:
 - Uses conventional commit messages for version calculation
-- Requires `svu` (Semantic Version Util) for Go projects
+- Requires `svu` (Semantic Version Util)
 - Automatically skips CI if commit message contains `[skip ci]`
+
+---
 
 ## Conventional Commits
 
-The version bumping workflow uses conventional commits to determine the next version:
+The version bumping uses conventional commits to determine the next version:
 
 - `fix:` → patch version bump (1.0.0 → 1.0.1)
 - `feat:` → minor version bump (1.0.0 → 1.1.0)
@@ -61,13 +73,14 @@ The version bumping workflow uses conventional commits to determine the next ver
    - Require PR reviews
    - Require status checks to pass
 
-## Usage
+## Workflow Summary
 
-1. **Development**:
-   - Create feature branches
-   - Use conventional commit messages
-   - Open PRs to `main` (triggers `pr.yml`)
+```
+Pull Request → pr.yml (tests + lint)
+     ↓
+   Merge to main
+     ↓
+release.yml (version bump + build + release)
+```
 
-2. **Releases**:
-   - Merge PRs to `main` (triggers `release.yml`)
-   - Version bump, tag creation, binary build and release happen automatically in sequence
+This ensures every PR is tested, and every merge to main automatically creates a release.
