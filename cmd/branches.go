@@ -20,10 +20,6 @@ type Branch struct {
 	IsLocal   bool
 }
 
-var (
-	forceDelete bool
-)
-
 var branchesCmd = &cobra.Command{
 	Use:   "branches",
 	Short: "Clean up merged branches interactively",
@@ -56,9 +52,6 @@ Interactive Controls:
 	},
 }
 
-func init() {
-	branchesCmd.Flags().BoolVarP(&forceDelete, "force", "f", false, "Skip confirmation prompt and delete selected branches immediately")
-}
 
 func runCleanup() {
 	// Check if we're in a git repository

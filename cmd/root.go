@@ -14,6 +14,11 @@ var (
 	BuildTime  = "unknown"
 )
 
+// Global flags
+var (
+	forceDelete bool
+)
+
 var rootCmd = &cobra.Command{
 	Use:   "git-gone",
 	Short: "Clean up merged git branches interactively",
@@ -35,6 +40,9 @@ func Execute() {
 }
 
 func init() {
+	// Add persistent flags that are available to root and all subcommands
+	rootCmd.PersistentFlags().BoolVarP(&forceDelete, "force", "f", false, "Skip confirmation prompt and delete selected branches immediately")
+	
 	// Add subcommands
 	rootCmd.AddCommand(branchesCmd)
 	rootCmd.AddCommand(versionCmd)
