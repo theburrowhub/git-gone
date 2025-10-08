@@ -4,83 +4,104 @@ This directory contains the CI/CD workflows for git-gone.
 
 ## Workflows
 
-### 1. Pull Request Checks (`pr.yml`)
-**Trigger**: Pull requests to `main` branch
+### `pr.yml` - Pull Request Checks
 
-**Actions performed**:
-- Go format check (`gofmt`)
-- Go vet analysis
-- Linting with `golangci-lint`
-- Run all tests with race detection
-- Coverage reporting to Codecov
-- Check `go mod tidy` status
+Runs on every pull request to `main` branch.
 
-**Purpose**: Validate code quality before merging PRs.
+**What it does:**
+- Format check (`gofmt`)
+- Go vet
+- Linting (`golangci-lint`)
+- Unit tests with race detection
+- Coverage report (uploaded to Codecov)
+- Module tidiness check
 
----
+### `release.yml` - Release and Build
 
-### 2. Release and Build (`release.yml`)
-**Trigger**: Push to `main` branch
+Triggers on tag pushes (e.g., `v1.2.3`).
 
-**Actions performed**:
-1. **Version Bump**:
-   - Calculate next semantic version using conventional commits
-   - Update version in code
-   - Update `CHANGELOG.md` with new release notes
-   - Commit version bump changes
-   - Create and push git tag
+**What it does:**
+- Uses [GoReleaser](https://goreleaser.com) to:
+  - Build binaries for multiple platforms (Linux, macOS on amd64 and arm64)
+  - Create archives (tar.gz and zip)
+  - Generate checksums
+  - Create GitHub release with changelog
+  - Upload all artifacts
 
-2. **Build Binaries**:
-   - Build for multiple platforms:
-     - Linux (amd64, arm64)
-     - macOS (amd64, arm64)
-   - Inject version information with ldflags
-   - Create compressed archives
+## Making a Release
 
-3. **Create Release**:
-   - Generate SHA256 checksums
-   - Create GitHub release with all artifacts
-   - Extract changelog for release notes
+To create a new release:
 
-**Requirements**:
-- Uses conventional commit messages for version calculation
-- Requires `svu` (Semantic Version Util)
-- Automatically skips CI if commit message contains `[skip ci]`
+1. Make sure you're on the `main` branch and it's up to date:
+   ```bash
+   git checkout main
+   git pull
+   ```
 
----
+2. Create and push a new tag following semantic versioning:
+   ```bash
+   # For a patch release (bug fixes)
+   git tag -a v0.4.2 -m "Release v0.4.2"
+   
+   # For a minor release (new features, backwards compatible)
+   git tag -a v0.5.0 -m "Release v0.5.0"
+   
+   # For a major release (breaking changes)
+   git tag -a v1.0.0 -m "Release v1.0.0"
+   
+   git push origin v0.4.2  # Replace with your version
+   ```
+
+3. The GitHub Action will automatically:
+   - Build binaries for all platforms
+   - Create a GitHub release
+   - Upload all artifacts
+   - Generate and attach checksums
+
+4. The release will be available at: https://github.com/theburrowhub/gitcleaner/releases
+
+## Testing Locally
+
+You can test the release process locally without pushing:
+
+```bash
+# Test building for all platforms (snapshot mode, no publishing)
+goreleaser release --snapshot --clean
+
+# Test building only for your current platform
+goreleaser build --snapshot --clean --single-target
+
+# Validate configuration
+goreleaser check
+```
+
+## Configuration
+
+The release process is configured in `.goreleaser.yaml` at the root of the repository.
+
+Key features:
+- Multi-platform builds (Linux, macOS)
+- Multi-architecture (amd64, arm64)
+- Automatic changelog generation from commits
+- Checksum generation for security
+- Archive creation (tar.gz and zip)
 
 ## Conventional Commits
 
-The version bumping uses conventional commits to determine the next version:
+For better changelogs, use conventional commit messages:
 
-- `fix:` → patch version bump (1.0.0 → 1.0.1)
-- `feat:` → minor version bump (1.0.0 → 1.1.0)
-- `BREAKING CHANGE:` → major version bump (1.0.0 → 2.0.0)
+- `feat:` for new features
+- `fix:` for bug fixes
+- `docs:` for documentation changes
+- `refactor:` for code refactoring
+- `test:` for test changes
+- `ci:` for CI/CD changes
+- `chore:` for other changes
 
-## Setup Requirements
-
-1. **Codecov Integration** (optional):
-   - Add `CODECOV_TOKEN` to repository secrets for private repos
-
-2. **Permissions**:
-   - Workflows need write permissions for:
-     - Contents (to push commits and tags)
-     - Pull requests (to comment on PRs)
-     - Actions (to upload artifacts)
-
-3. **Branch Protection** (recommended):
-   - Protect `main` branch
-   - Require PR reviews
-   - Require status checks to pass
-
-## Workflow Summary
-
-```
-Pull Request → pr.yml (tests + lint)
-     ↓
-   Merge to main
-     ↓
-release.yml (version bump + build + release)
+Example:
+```bash
+git commit -m "feat: add interactive mode for branch selection"
+git commit -m "fix: handle empty git repositories correctly"
 ```
 
-This ensures every PR is tested, and every merge to main automatically creates a release.
+These will be automatically categorized in the release notes.

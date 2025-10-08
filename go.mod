@@ -3,6 +3,7 @@ module git-gone
 go 1.19
 
 require (
+	github.com/fynelabs/selfupdate v0.2.1
 	github.com/koki-develop/go-fzf v0.15.0
 	github.com/spf13/cobra v1.10.1
 )
