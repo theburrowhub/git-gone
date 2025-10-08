@@ -47,16 +47,16 @@ func runSelfUpdate() {
 	// Format: https://github.com/{owner}/{repo}/releases/download/{version}/{binary}-{os}-{arch}
 	owner := "theburrowhub"
 	repo := "git-gone"
-	
+
 	// Get the appropriate binary name and extension for the platform
 	binaryName := "git-gone"
-	
+
 	// Map OS names to match release artifacts
 	osName := runtime.GOOS
 	if osName == "darwin" {
 		osName = "macos"
 	}
-	
+
 	ext := ""
 	if runtime.GOOS == "windows" {
 		ext = ".exe"
@@ -119,4 +119,3 @@ func runSelfUpdate() {
 	fmt.Println("✅ Successfully updated to the latest version!")
 	fmt.Println("🔄 Please restart git-gone to use the new version")
 }
-
