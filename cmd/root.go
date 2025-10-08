@@ -46,4 +46,5 @@ func init() {
 	// Add subcommands
 	rootCmd.AddCommand(branchesCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(selfUpdateCmd)
 }
