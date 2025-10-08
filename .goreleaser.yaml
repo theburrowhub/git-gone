@@ -75,7 +75,6 @@ release:
     name: gitcleaner
   draft: false
   prerelease: auto
-  mode: replace
   header: |
     ## git-gone {{.Tag}}
 
@@ -88,7 +87,7 @@ release:
     #### macOS / Linux
     ```bash
     # Download and install (example for macOS ARM64)
-    curl -L https://github.com/jamuriano/gitcleaner/releases/download/{{.Tag}}/git-gone-darwin-arm64.tar.gz | tar xz
+    curl -L https://github.com/theburrowhub/gitcleaner/releases/download/{{.Tag}}/git-gone-darwin-arm64.tar.gz | tar xz
     sudo mv git-gone /usr/local/bin/
     ```
 
