@@ -1,3 +1,7 @@
+## [0.5.5] - 2025-10-08
+
+- fix: remove .goreleaser.yaml and enhance GitHub Actions workflow
+
 ## [0.4.1] - 2025-10-05
 
 - ci: fix actions (#5)
