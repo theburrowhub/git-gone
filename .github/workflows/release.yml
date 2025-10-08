@@ -3,17 +3,15 @@ name: Release and Build
 on:
   push:
     branches: [ main ]
-    tags:
-      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  version-and-tag:
-    name: Calculate Version and Create Tag
+  version-tag-and-release:
+    name: Version, Tag and Release
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip ci]')
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     
     steps:
     - name: Checkout code
@@ -30,7 +28,8 @@ jobs:
     - name: Install svu
       run: go install github.com/caarlos0/svu@latest
         
-    - name: Calculate and create tag
+    - name: Calculate next version
+      id: version
       run: |
         CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
         NEXT_VERSION=$(svu next --strip-prefix)
@@ -40,33 +39,30 @@ jobs:
         
         if [ "v${NEXT_VERSION}" = "${CURRENT_VERSION}" ]; then
           echo "No version bump needed, skipping release"
-          exit 0
+          echo "should_release=false" >> $GITHUB_OUTPUT
+        else
+          echo "should_release=true" >> $GITHUB_OUTPUT
+          echo "new_version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
         fi
         
-        echo "Creating tag v${NEXT_VERSION}"
+    - name: Create tag
+      if: steps.version.outputs.should_release == 'true'
+      run: |
+        NEW_VERSION="${{ steps.version.outputs.new_version }}"
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git tag -a "v${NEXT_VERSION}" -m "Release v${NEXT_VERSION}"
-        git push origin "v${NEXT_VERSION}"
-        echo "Tag v${NEXT_VERSION} created and pushed"
-
-  goreleaser:
-    name: Release with GoReleaser
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+        git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
+        git push origin "v${NEW_VERSION}"
+        echo "Tag v${NEW_VERSION} created and pushed"
         
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.19'
+    - name: Wait for tag to be available
+      if: steps.version.outputs.should_release == 'true'
+      run: |
+        sleep 5
+        git fetch --tags
         
     - name: Run GoReleaser
+      if: steps.version.outputs.should_release == 'true'
       uses: goreleaser/goreleaser-action@v5
       with:
         distribution: goreleaser
