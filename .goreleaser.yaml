@@ -1,0 +1,111 @@
+version: 2
+
+project_name: git-gone
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+
+builds:
+  - id: git-gone
+    main: .
+    binary: git-gone
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X git-gone/cmd.Version={{.Version}}
+      - -X git-gone/cmd.CommitHash={{.ShortCommit}}
+      - -X git-gone/cmd.BuildTime={{.Date}}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: default
+    name_template: >-
+      {{ .ProjectName }}-
+      {{- .Os }}-
+      {{- .Arch }}
+    formats:
+      - tar.gz
+      - zip
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+
+checksum:
+  name_template: '{{ .ProjectName }}-checksums.txt'
+  algorithm: sha256
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^chore:'
+      - '^style:'
+      - typo
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Bug Fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Enhancements
+      regexp: '^.*?(enhancement|refactor)(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Others
+      order: 999
+
+release:
+  github:
+    owner: theburrowhub
+    name: gitcleaner
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## git-gone {{.Tag}}
+
+    **Release Date:** {{.Date}}
+
+    ### Installation
+
+    Download the appropriate binary for your platform from the assets below.
+
+    #### macOS / Linux
+    ```bash
+    # Download and install (example for macOS ARM64)
+    curl -L https://github.com/jamuriano/gitcleaner/releases/download/{{.Tag}}/git-gone-darwin-arm64.tar.gz | tar xz
+    sudo mv git-gone /usr/local/bin/
+    ```
+
+    #### Verify checksums
+    ```bash
+    sha256sum -c git-gone-checksums.txt
+    ```
+
+  footer: |
+    **Full Changelog**: https://github.com/theburrowhub/gitcleaner/compare/{{.PreviousTag}}...{{.Tag}}
+
+    ---
+    _Built with ❤️ using [GoReleaser](https://goreleaser.com)_
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+metadata:
+  mod_timestamp: '{{ .CommitTimestamp }}'
+
