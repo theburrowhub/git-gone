@@ -1,3 +1,7 @@
+## [0.6.0] - 2025-12-15
+
+- feat: add a flag to preselect all branches (#8)
+
 ## [0.5.5] - 2025-10-08
 
 - fix: remove .goreleaser.yaml and enhance GitHub Actions workflow
