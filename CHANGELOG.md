@@ -1,3 +1,7 @@
+## [0.7.0] - 2025-12-15
+
+- feat: force other branches to be deleted (#9)
+
 ## [0.6.0] - 2025-12-15
 
 - feat: add a flag to preselect all branches (#8)
