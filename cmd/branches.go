@@ -55,7 +55,8 @@ Interactive Controls:
 func runCleanup() {
 	// Validate incompatible flags
 	if selectAll && forceDelete {
-		log.Fatal("❌ Options -a (--all) and -f (--force) are incompatible")
+		fmt.Println("❌ Options -a (--all) and -f (--force) are incompatible")
+		os.Exit(1)
 	}
 
 	// Check if we're in a git repository
