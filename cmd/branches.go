@@ -14,11 +14,14 @@ import (
 )
 
 type Branch struct {
-	Name      string
-	IsMerged  bool
-	IsDefault bool
-	IsLocal   bool
+	Name       string
+	IsMerged   bool
+	IsDefault  bool
+	IsLocal    bool
+	IsUnmerged bool
 }
+
+const unmergedPrefix = "(!) "
 
 var branchesCmd = &cobra.Command{
 	Use:   "branches",
@@ -97,25 +100,44 @@ func runCleanup() {
 		mergedBranches = []string{}
 	}
 
-	// Combine and deduplicate branches
-	branchMap := make(map[string]bool)
+	// Combine and deduplicate branches (track merged/gone branches)
+	safeToDeleteMap := make(map[string]bool)
 	for _, branch := range goneBranches {
 		branch = strings.TrimSpace(branch)
 		if branch != defaultBranch && branch != currentBranch && branch != "" {
-			branchMap[branch] = true
+			safeToDeleteMap[branch] = true
 		}
 	}
 	for _, branch := range mergedBranches {
 		branch = strings.TrimSpace(branch)
 		if branch != defaultBranch && branch != currentBranch && branch != "" {
-			branchMap[branch] = true
+			safeToDeleteMap[branch] = true
 		}
 	}
 
-	// Convert map to slice
+	// Track unmerged branches if -u flag is set
+	unmergedBranchesMap := make(map[string]bool)
+	if includeUnmerged {
+		allBranches, err := getAllLocalBranches()
+		if err != nil {
+			fmt.Printf("⚠️  Warning: Failed to get all branches: %v\n", err)
+		} else {
+			for _, branch := range allBranches {
+				branch = strings.TrimSpace(branch)
+				if branch != defaultBranch && branch != currentBranch && branch != "" && !safeToDeleteMap[branch] {
+					unmergedBranchesMap[branch] = true
+				}
+			}
+		}
+	}
+
+	// Convert maps to display list
 	var branchesToDelete []string
-	for branch := range branchMap {
+	for branch := range safeToDeleteMap {
 		branchesToDelete = append(branchesToDelete, branch)
+	}
+	for branch := range unmergedBranchesMap {
+		branchesToDelete = append(branchesToDelete, unmergedPrefix+branch)
 	}
 
 	if len(branchesToDelete) == 0 {
@@ -132,6 +154,14 @@ func runCleanup() {
 	}
 	if len(mergedBranches) > 0 {
 		fmt.Printf("   • %d branches merged into %s\n", len(mergedBranches), defaultBranch)
+	}
+	if len(unmergedBranchesMap) > 0 {
+		fmt.Printf("   • %d unmerged branches ((!) requires confirmation)\n", len(unmergedBranchesMap))
+	}
+
+	// Show legend if there are unmerged branches
+	if len(unmergedBranchesMap) > 0 {
+		fmt.Println("\n   (!) Unmerged")
 	}
 
 	// Select branches: use all if -a flag is set, otherwise use interactive fzf
@@ -155,14 +185,28 @@ func runCleanup() {
 		return
 	}
 
-	// Show branches to delete
-	fmt.Printf("\n⚠️  The following branches will be deleted:\n")
+	// Separate unmerged branches from safe branches
+	var safeBranches []string
+	var unmergedSelected []string
 	for _, branch := range selectedBranches {
-		fmt.Printf("  • %s\n", branch)
+		if strings.HasPrefix(branch, unmergedPrefix) {
+			unmergedSelected = append(unmergedSelected, strings.TrimPrefix(branch, unmergedPrefix))
+		} else {
+			safeBranches = append(safeBranches, branch)
+		}
 	}
 
-	// Confirm deletion (unless --force is used)
-	if !forceDelete {
+	// Show branches to delete
+	fmt.Printf("\n⚠️  The following branches will be deleted:\n")
+	for _, branch := range safeBranches {
+		fmt.Printf("  • %s\n", branch)
+	}
+	for _, branch := range unmergedSelected {
+		fmt.Printf("  • %s%s (local + remote)\n", unmergedPrefix, branch)
+	}
+
+	// Confirm deletion for safe branches (unless --force is used)
+	if len(safeBranches) > 0 && !forceDelete {
 		fmt.Print("\nAre you sure you want to delete these branches? (y/N): ")
 		reader := bufio.NewReader(os.Stdin)
 		response, _ := reader.ReadString('\n')
@@ -174,13 +218,45 @@ func runCleanup() {
 		}
 	}
 
-	// Delete selected branches
+	// Always confirm unmerged branches (even with -f)
+	if len(unmergedSelected) > 0 {
+		fmt.Printf("\n🚨 WARNING: You are about to delete %d UNMERGED branch(es):\n", len(unmergedSelected))
+		for _, branch := range unmergedSelected {
+			fmt.Printf("   • %s (will be deleted locally AND from remote)\n", branch)
+		}
+		fmt.Print("\n⚠️  This action cannot be undone! Type 'DELETE' to confirm: ")
+		reader := bufio.NewReader(os.Stdin)
+		response, _ := reader.ReadString('\n')
+		response = strings.TrimSpace(response)
+
+		if response != "DELETE" {
+			fmt.Println("❌ Deletion of unmerged branches cancelled")
+			// Still delete safe branches if force was used
+			if forceDelete && len(safeBranches) > 0 {
+				unmergedSelected = []string{}
+			} else {
+				return
+			}
+		}
+	}
+
+	// Delete safe branches
 	deletedCount := 0
-	for _, branch := range selectedBranches {
+	for _, branch := range safeBranches {
 		if err := deleteBranch(branch); err != nil {
 			fmt.Printf("❌ Failed to delete branch %s: %v\n", branch, err)
 		} else {
 			fmt.Printf("✅ Deleted branch: %s\n", branch)
+			deletedCount++
+		}
+	}
+
+	// Delete unmerged branches (local + remote)
+	for _, branch := range unmergedSelected {
+		if err := deleteBranchWithRemote(branch); err != nil {
+			fmt.Printf("❌ Failed to delete branch %s: %v\n", branch, err)
+		} else {
+			fmt.Printf("✅ Deleted branch (local + remote): %s\n", branch)
 			deletedCount++
 		}
 	}
@@ -346,6 +422,49 @@ func deleteBranch(branch string) error {
 		if err != nil {
 			return fmt.Errorf("%s", string(output))
 		}
+	}
+
+	return nil
+}
+
+func getAllLocalBranches() ([]string, error) {
+	cmd := exec.Command("git", "branch", "--format", "%(refname:short)")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var branches []string
+	for _, line := range lines {
+		branch := strings.TrimSpace(line)
+		if branch != "" {
+			branches = append(branches, branch)
+		}
+	}
+	return branches, nil
+}
+
+func deleteBranchWithRemote(branch string) error {
+	// First try to delete remote branch
+	cmd := exec.Command("git", "push", "origin", "--delete", branch)
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		// Remote might not exist, log warning but continue
+		outputStr := string(output)
+		if !strings.Contains(outputStr, "remote ref does not exist") {
+			fmt.Printf("⚠️  Warning: Failed to delete remote branch %s: %s\n", branch, outputStr)
+		}
+	}
+
+	// Force delete local branch
+	cmd = exec.Command("git", "branch", "-D", branch)
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%s", string(output))
 	}
 
 	return nil
