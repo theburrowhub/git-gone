@@ -53,6 +53,11 @@ Interactive Controls:
 }
 
 func runCleanup() {
+	// Validate incompatible flags
+	if selectAll && forceDelete {
+		log.Fatal("❌ Options -a (--all) and -f (--force) are incompatible")
+	}
+
 	// Check if we're in a git repository
 	if err := checkGitRepository(); err != nil {
 		log.Fatal("❌ Not in a git repository")
@@ -128,14 +133,20 @@ func runCleanup() {
 		fmt.Printf("   • %d branches merged into %s\n", len(mergedBranches), defaultBranch)
 	}
 
-	// Use go-fzf for selection
-	selectedBranches, err := selectBranchesWithFzf(branchesToDelete)
-	if err != nil {
-		if err.Error() == "abort" {
-			fmt.Println("\n❌ Selection cancelled")
-			return
+	// Select branches: use all if -a flag is set, otherwise use interactive fzf
+	var selectedBranches []string
+	if selectAll {
+		selectedBranches = branchesToDelete
+	} else {
+		var err error
+		selectedBranches, err = selectBranchesWithFzf(branchesToDelete)
+		if err != nil {
+			if err.Error() == "abort" {
+				fmt.Println("\n❌ Selection cancelled")
+				return
+			}
+			log.Fatalf("❌ Failed to select branches: %v", err)
 		}
-		log.Fatalf("❌ Failed to select branches: %v", err)
 	}
 
 	if len(selectedBranches) == 0 {
