@@ -1,6 +1,7 @@
 # git-gone
 
-A Git plugin for cleaning up merged git branches interactively using fuzzy finder.
+A Git plugin for cleaning up git repositories interactively. Removes merged branches, stale tags, and other cleanup tasks.
+
 Works as a native Git extension: `git gone`
 
 ## Features
@@ -10,8 +11,10 @@ Works as a native Git extension: `git gone`
   - Branches merged into the default branch (traditional merge)
   - Branches with deleted remotes (squash/rebase merges)
   - Platform-independent operation (works regardless of system language)
-- 🔍 Interactive multi-selection using go-fzf
+- 🏷️ Detects stale tags (local tags not on remote)
+- 🔍 Interactive multi-selection using fuzzy finder
 - ✅ Safe deletion with confirmation prompt
+- ⚠️ Extra safety for dangerous operations (unmerged branches require typing "DELETE")
 - 📊 Clear status indicators throughout the process
 
 ## Installation
@@ -50,7 +53,7 @@ Download the latest release from the [releases page](https://github.com/theburro
 
 ## Usage
 
-### Basic Usage
+### Branch Cleanup
 
 Navigate to any git repository and run:
 
@@ -62,84 +65,148 @@ git-gone
 git-gone branches
 ```
 
-### Available Commands
+#### Branch Command Flags
 
-- **`git-gone` or `git-gone branches`**: Clean up merged branches (default)
-- **`git-gone version`**: Show version information
-- **`git-gone help`**: Show help information
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--force` | `-f` | Skip confirmation prompt (doesn't apply to unmerged branches) |
+| `--all` | `-a` | Select all candidate branches without interactive selection |
+| `--unmerged` | `-u` | Include unmerged branches in the list (marked with `(!)`) |
 
-### What the tool does:
-1. Update all remote references (`git fetch --all --prune`)
-2. Identify the default branch (main/master)
-3. Find deletable branches using two methods:
-   - Branches merged into the default branch (traditional merges)
-   - Branches whose remote tracking branch is gone (squash/rebase merges)
-4. Present an interactive list where you can:
-   - Use arrow keys to navigate
-   - Press `Tab` or `Space` to select/deselect branches
-   - Press `Enter` to confirm selection
-   - Press `Esc` to cancel
-   - Type to filter branches by name
-5. Ask for confirmation before deleting selected branches
-6. Delete the selected branches safely
+**Note**: `-a` and `-f` are incompatible. The `-a` flag is designed for review before deletion.
+
+#### Examples
+
+```bash
+# Interactive cleanup (default)
+git gone
+
+# Select all candidates, then confirm
+git gone -a
+
+# Force delete safe branches (merged/gone), skip confirmation
+git gone -f
+
+# Include unmerged branches (requires typing DELETE to confirm)
+git gone -u
+
+# Include all branches including unmerged, review before confirmation
+git gone -a -u
+```
+
+### Tag Cleanup
+
+```bash
+# List stale tags (local tags not on remote)
+git-gone tags list
+
+# List ALL local tags (not just stale)
+git-gone tags list --no-stale
+git-gone tags list -n
+
+# Clean stale tags interactively
+git-gone tags clean
+
+# Clean all stale tags with confirmation
+git-gone tags clean --all
+
+# Clean all stale tags without confirmation
+git-gone tags clean --all --force
+
+# Clean ANY local tag (not just stale)
+git-gone tags clean --no-stale
+git-gone tags clean -n
+```
+
+### Other Commands
+
+```bash
+# Show version information
+git-gone version
+
+# Self-update to latest release
+git-gone self-update
+
+# Show help
+git-gone --help
+git-gone branches --help
+git-gone tags --help
+```
 
 ## Command Structure
 
-git-gone uses a subcommand structure powered by Cobra:
-
-```bash
-# Show general help
-git-gone --help
-git-gone -h
-
-# Show version
-git-gone version
-
-# Clean branches (default command)
-git-gone
-git-gone branches
-
-# Get help for specific command
-git-gone branches --help
 ```
-
-**Note**: When using as a Git plugin (`git gone`), commands work the same way:
-- `git gone` - runs branch cleanup
-- `git gone version` - shows version
-- `git gone -h` - shows help
+git-gone
+├── branches              # Default command (branch cleanup)
+│   ├── --all, -a        # Select all candidates
+│   ├── --force, -f      # Skip confirmation
+│   └── --unmerged, -u   # Include unmerged branches
+├── tags                  # Tag management
+│   ├── list             # List stale tags
+│   │   └── --no-stale, -n  # List ALL local tags
+│   └── clean            # Clean stale tags
+│       ├── --all, -a    # Select all stale tags
+│       ├── --force, -f  # Skip confirmation
+│       └── --no-stale, -n  # Include ALL local tags
+├── version              # Show version info
+├── self-update          # Update to latest release
+└── help                 # Auto-generated help
+```
 
 ## Interactive Controls
 
 - **↑/↓**: Navigate through the list
-- **Tab/Space**: Toggle selection of current branch
+- **Tab/Space**: Toggle selection of current item
 - **Enter**: Confirm selection and proceed
 - **Esc**: Cancel operation
-- **Type**: Filter branches by name
+- **Type**: Filter items by name
+
+## Branch Categories
+
+| Indicator | Description | Risk Level |
+|-----------|-------------|------------|
+| (none) | Merged branch or gone remote | Safe |
+| `(!)` | Unmerged branch | Dangerous - requires typing "DELETE" |
+
+When using `-u` flag, a legend is shown:
+```
+   (!) Unmerged
+```
 
 ## Safety Features
 
-- Never deletes the default branch (main/master)
-- Never deletes the current branch
-- Shows only branches that have been merged
-- Requires explicit confirmation before deletion
-- Attempts safe deletion first (`git branch -d`)
-- Falls back to force deletion only if necessary
+- Never deletes the default branch (main/master/develop)
+- Never deletes the currently checked out branch
+- Merged branches: Simple y/N confirmation
+- Unmerged branches (`-u` flag): Requires typing "DELETE" to confirm
+- Shows per-item deletion success/failure
+- Attempts safe deletion first, falls back to force only if needed
+- Remote deletion only for unmerged branches (when applicable)
 
 ## Requirements
 
-- Go 1.19 or higher
+- Go 1.19 or higher (for building from source)
 - Git installed and configured
 - Terminal with UTF-8 support (for emoji indicators)
 
 ## Dependencies
 
-- [github.com/koki-develop/go-fzf](https://github.com/koki-develop/go-fzf) - Fuzzy finder library
+- [github.com/spf13/cobra](https://github.com/spf13/cobra) - CLI framework
+- [github.com/koki-develop/go-fzf](https://github.com/koki-develop/go-fzf) - Fuzzy finder
+- [github.com/charmbracelet/bubbletea](https://github.com/charmbracelet/bubbletea) - TUI framework
+- [github.com/charmbracelet/lipgloss](https://github.com/charmbracelet/lipgloss) - TUI styling
 
 ## How it Works as a Git Plugin
 
 When you install `git-gone`, the binary is placed in your `$PATH`. Git automatically recognizes executables named `git-<command>` as git subcommands, allowing you to use it as `git gone`.
 
 ## Development
+
+### Running tests
+
+```bash
+go test ./tests/... -v
+```
 
 ### Creating a new release
 
