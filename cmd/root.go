@@ -45,10 +45,11 @@ func init() {
 	// Add persistent flags that are available to root and all subcommands
 	rootCmd.PersistentFlags().BoolVarP(&forceDelete, "force", "f", false, "Skip confirmation prompt and delete selected branches immediately")
 	rootCmd.PersistentFlags().BoolVarP(&selectAll, "all", "a", false, "Select all candidate branches without interactive selection (incompatible with -f)")
-	rootCmd.PersistentFlags().BoolVarP(&includeUnmerged, "unmerged", "u", false, "Include unmerged branches in the list (marked with ⚠️, always requires confirmation)")
+	rootCmd.PersistentFlags().BoolVarP(&includeUnmerged, "unmerged", "u", false, "Include unmerged branches in the list (marked with (!), always requires confirmation)")
 
 	// Add subcommands
 	rootCmd.AddCommand(branchesCmd)
+	rootCmd.AddCommand(tagsCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(selfUpdateCmd)
 }
