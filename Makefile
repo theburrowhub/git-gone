@@ -1,4 +1,4 @@
-.PHONY: help build install test lint clean run dev docker-test release
+.PHONY: help build install test lint clean run dev docker-test release goreleaser-check goreleaser-build goreleaser-release-dry
 
 # Variables
 BINARY_NAME=git-gone
@@ -120,5 +120,22 @@ release: clean check build-all ## Prepare release (clean, check, build all platf
 
 ci: lint test ## Run CI checks
 	@echo "$(GREEN)✓ CI checks passed$(NC)"
+
+# ========== GORELEASER TARGETS ==========
+
+goreleaser-check: ## Check goreleaser configuration
+	@echo "$(BLUE)Checking goreleaser configuration...$(NC)"
+	@goreleaser check
+	@echo "$(GREEN)✓ GoReleaser config valid$(NC)"
+
+goreleaser-build: ## Build snapshot with goreleaser (no publish)
+	@echo "$(BLUE)Building with goreleaser (snapshot)...$(NC)"
+	@goreleaser build --snapshot --clean
+	@echo "$(GREEN)✓ Snapshot build complete$(NC)"
+
+goreleaser-release-dry: ## Simulate full release with goreleaser (no publish)
+	@echo "$(BLUE)Simulating release with goreleaser...$(NC)"
+	@goreleaser release --snapshot --clean
+	@echo "$(GREEN)✓ Dry-run release complete$(NC)"
 
 .DEFAULT_GOAL := help
