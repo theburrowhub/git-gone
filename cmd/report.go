@@ -368,4 +368,3 @@ func outputReport(report *AnalysisReport, format string, filePath string) {
 		fmt.Println(output)
 	}
 }
-
