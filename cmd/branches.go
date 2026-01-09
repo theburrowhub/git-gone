@@ -56,6 +56,25 @@ Interactive Controls:
 }
 
 func runCleanup() {
+	// Report mode: generate analysis and exit without deleting
+	if reportMode {
+		// Check if we're in a git repository
+		if err := checkGitRepository(); err != nil {
+			fmt.Println("❌ Not in a git repository")
+			os.Exit(1)
+		}
+
+		fmt.Println("🔄 Updating remote references...")
+		if err := updateRemoteRefs(); err != nil {
+			fmt.Printf("⚠️  Warning: Failed to update remote refs: %v\n", err)
+		}
+
+		fmt.Println("📊 Analyzing branches...\n")
+		report := analyzeBranches()
+		outputReport(report, outputFormat, outputFile)
+		return
+	}
+
 	// Validate incompatible flags
 	if selectAll && forceDelete {
 		fmt.Println("❌ Options -a (--all) and -f (--force) are incompatible")

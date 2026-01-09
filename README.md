@@ -13,6 +13,7 @@ Works as a native Git extension: `git gone`
 - 🔍 Interactive multi-selection using go-fzf
 - ✅ Safe deletion with confirmation prompt
 - 📊 Clear status indicators throughout the process
+- 📋 Generate detailed branch analysis reports (text/JSON/CSV)
 
 ## Installation
 
@@ -65,6 +66,7 @@ git-gone branches
 ### Available Commands
 
 - **`git-gone` or `git-gone branches`**: Clean up merged branches (default)
+- **`git-gone --report`**: Generate branch analysis report without deleting
 - **`git-gone version`**: Show version information
 - **`git-gone help`**: Show help information
 
@@ -82,6 +84,90 @@ git-gone branches
    - Type to filter branches by name
 5. Ask for confirmation before deleting selected branches
 6. Delete the selected branches safely
+
+## Report Mode
+
+Generate a detailed analysis report without deleting any branches:
+
+### Basic Report
+
+```bash
+git-gone --report
+git-gone -r
+```
+
+### Output Formats
+
+```bash
+# Text format (default)
+git-gone --report --output text
+
+# JSON format (for scripting/automation)
+git-gone --report --output json
+
+# CSV format (for spreadsheets)
+git-gone --report --output csv
+```
+
+### Save to File
+
+```bash
+git-gone --report --output json --file report.json
+```
+
+### Include Unmerged Branches
+
+```bash
+git-gone --report --unmerged
+```
+
+### Report Categories
+
+The report classifies branches into:
+
+- **Safe to Delete**: Merged branches or branches with deleted remotes
+- **Local-only**: Merged but never pushed to remote (review recommended)
+- **Unmerged**: Not merged, requires `--unmerged` flag to include
+- **Protected**: Default branch or currently checked out
+
+### Example Report Output
+
+```
+============================================================
+              GIT-GONE BRANCH ANALYSIS REPORT
+============================================================
+Repository: /path/to/repo
+Date: 2026-01-09 14:30:00
+Default Branch: main
+Current Branch: feature/ui
+
+------------------------------------------------------------
+SAFE TO DELETE (2 branches)
+------------------------------------------------------------
+  * feature/old-login
+    Method: merged | Reason: Merged into main
+    Remote: gone | Last commit: 2025-12-15
+
+------------------------------------------------------------
+LOCAL-ONLY (1 branch) - Merged but never pushed
+------------------------------------------------------------
+  * temp/local-experiment
+    Method: merged | Reason: Merged but never pushed to remote
+    Remote: local_only | Last commit: 2025-12-10
+
+------------------------------------------------------------
+PROTECTED (2 branches)
+------------------------------------------------------------
+  * main
+    Reason: Default branch
+
+  * feature/ui
+    Reason: Currently checked out
+
+============================================================
+SUMMARY: 2 safe | 1 local-only | 0 unmerged | 2 protected
+============================================================
+```
 
 ## Command Structure
 
@@ -101,6 +187,14 @@ git-gone branches
 
 # Get help for specific command
 git-gone branches --help
+
+# Generate analysis report
+git-gone --report
+git-gone -r
+
+# Report in JSON format
+git-gone --report --output json
+git-gone -r -o json
 ```
 
 **Note**: When using as a Git plugin (`git gone`), commands work the same way:

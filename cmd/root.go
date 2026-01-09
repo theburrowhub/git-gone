@@ -19,6 +19,9 @@ var (
 	forceDelete     bool
 	selectAll       bool
 	includeUnmerged bool
+	reportMode      bool
+	outputFormat    string
+	outputFile      string
 )
 
 var rootCmd = &cobra.Command{
@@ -46,6 +49,9 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&forceDelete, "force", "f", false, "Skip confirmation prompt and delete selected branches immediately")
 	rootCmd.PersistentFlags().BoolVarP(&selectAll, "all", "a", false, "Select all candidate branches without interactive selection (incompatible with -f)")
 	rootCmd.PersistentFlags().BoolVarP(&includeUnmerged, "unmerged", "u", false, "Include unmerged branches in the list (marked with ⚠️, always requires confirmation)")
+	rootCmd.PersistentFlags().BoolVarP(&reportMode, "report", "r", false, "Generate analysis report without deleting branches")
+	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "text", "Report output format (text, json, csv)")
+	rootCmd.PersistentFlags().StringVar(&outputFile, "file", "", "Write report to file instead of stdout")
 
 	// Add subcommands
 	rootCmd.AddCommand(branchesCmd)
