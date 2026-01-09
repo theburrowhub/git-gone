@@ -74,4 +74,3 @@ func runReport() {
 	report := analyzeBranches()
 	outputReport(report, reportOutputFormat, reportOutputFile)
 }
-
