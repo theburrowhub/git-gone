@@ -1,3 +1,11 @@
+## [0.8.0] - 2026-01-09
+
+- Merge pull request #11 from theburrowhub:featch/report
+- fix: handle CSV writer errors in report generation
+- fix: update branch analysis output formatting
+- fix: remove unnecessary blank line in outputReport function
+- feat: add branch analysis report generation
+
 ## [0.7.0] - 2025-12-15
 
 - feat: force other branches to be deleted (#9)
