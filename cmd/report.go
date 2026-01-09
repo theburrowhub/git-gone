@@ -106,7 +106,7 @@ func getRepositoryPath() string {
 }
 
 // analyzeBranches collects and classifies all branches in the repository
-func analyzeBranches() *AnalysisReport {
+func analyzeBranches(includeUnmerged bool) *AnalysisReport {
 	report := &AnalysisReport{
 		Repository:   getRepositoryPath(),
 		AnalysisDate: time.Now().Format("2006-01-02 15:04:05"),

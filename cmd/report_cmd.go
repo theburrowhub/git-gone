@@ -67,10 +67,7 @@ func runReport() {
 		fmt.Printf("⚠️  Warning: Failed to update remote refs: %v\n", err)
 	}
 
-	// Set the global includeUnmerged flag for analyzeBranches to use
-	includeUnmerged = reportIncludeUnmerged
-
 	fmt.Println("📊 Analyzing branches...")
-	report := analyzeBranches()
+	report := analyzeBranches(reportIncludeUnmerged)
 	outputReport(report, reportOutputFormat, reportOutputFile)
 }
