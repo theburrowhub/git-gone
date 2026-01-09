@@ -43,8 +43,12 @@ print_error() {
 detect_installation_mode() {
     # Check if we're running from a local git repository with git-gone source
     if [ -f "go.mod" ] && [ -f "main.go" ] && [ -d ".git" ]; then
-        # Additional check: verify it's actually the git-gone repository
-        if grep -q "module git-gone" go.mod 2>/dev/null; then
+        # Verify it's actually the official git-gone repository by checking remote URL
+        local remote_url
+        remote_url=$(git config --get remote.origin.url 2>/dev/null)
+        
+        # Match both HTTPS and SSH URLs for the official repository
+        if echo "$remote_url" | grep -qE "(github\.com[/:]theburrowhub/git-gone(\.git)?$)"; then
             print_info "Detected local git-gone repository - will build from source"
             return 0  # Local mode
         fi
