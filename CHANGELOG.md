@@ -1,3 +1,8 @@
+## [0.8.1] - 2026-01-09
+
+- Merge pull request #12 from theburrowhub:fix/installation-script
+- fix: enhance installation mode detection for git-gone repository
+
 ## [0.8.0] - 2026-01-09
 
 - Merge pull request #11 from theburrowhub:featch/report
