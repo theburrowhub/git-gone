@@ -69,7 +69,7 @@ func runCleanup() {
 			fmt.Printf("⚠️  Warning: Failed to update remote refs: %v\n", err)
 		}
 
-		fmt.Println("📊 Analyzing branches...\n")
+		fmt.Println("📊 Analyzing branches...")
 		report := analyzeBranches()
 		outputReport(report, outputFormat, outputFile)
 		return
