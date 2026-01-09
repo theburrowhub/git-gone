@@ -9,9 +9,8 @@ import (
 
 // Report command flags
 var (
-	reportOutputFormat    string
-	reportOutputFile      string
-	reportIncludeUnmerged bool
+	reportOutputFormat string
+	reportOutputFile   string
 )
 
 var reportCmd = &cobra.Command{
@@ -52,7 +51,7 @@ Output formats available:
 func init() {
 	reportCmd.Flags().StringVarP(&reportOutputFormat, "output", "o", "text", "Report output format (text, json, csv)")
 	reportCmd.Flags().StringVar(&reportOutputFile, "file", "", "Write report to file instead of stdout")
-	reportCmd.Flags().BoolVarP(&reportIncludeUnmerged, "unmerged", "u", false, "Include unmerged branches in the report")
+	// Note: --unmerged/-u flag is inherited from root command as a persistent flag
 }
 
 func runReport() {
@@ -68,6 +67,6 @@ func runReport() {
 	}
 
 	fmt.Println("📊 Analyzing branches...")
-	report := analyzeBranches(reportIncludeUnmerged)
+	report := analyzeBranches(includeUnmerged)
 	outputReport(report, reportOutputFormat, reportOutputFile)
 }
