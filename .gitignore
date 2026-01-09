@@ -21,6 +21,9 @@ go.work.sum
 # Binary
 git-gone
 
+# Build artifacts
+dist/
+
 # IDE specific files
 .idea/
 *.swp
