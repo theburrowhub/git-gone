@@ -79,7 +79,7 @@ git-gone branches
 ### Available Commands
 
 - **`git-gone` or `git-gone branches`**: Clean up merged branches (default)
-- **`git-gone --report`**: Generate branch analysis report without deleting
+- **`git-gone report`**: Generate branch analysis report without deleting
 - **`git-gone version`**: Show version information
 - **`git-gone help`**: Show help information
 
@@ -105,33 +105,34 @@ Generate a detailed analysis report without deleting any branches:
 ### Basic Report
 
 ```bash
-git-gone --report
-git-gone -r
+git-gone report
 ```
 
 ### Output Formats
 
 ```bash
 # Text format (default)
-git-gone --report --output text
+git-gone report --output text
 
 # JSON format (for scripting/automation)
-git-gone --report --output json
+git-gone report --output json
+git-gone report -o json
 
 # CSV format (for spreadsheets)
-git-gone --report --output csv
+git-gone report --output csv
 ```
 
 ### Save to File
 
 ```bash
-git-gone --report --output json --file report.json
+git-gone report --output json --file report.json
 ```
 
 ### Include Unmerged Branches
 
 ```bash
-git-gone --report --unmerged
+git-gone report --unmerged
+git-gone report -u
 ```
 
 ### Report Categories
@@ -200,14 +201,14 @@ git-gone branches
 
 # Get help for specific command
 git-gone branches --help
+git-gone report --help
 
 # Generate analysis report
-git-gone --report
-git-gone -r
+git-gone report
 
 # Report in JSON format
-git-gone --report --output json
-git-gone -r -o json
+git-gone report --output json
+git-gone report -o json
 ```
 
 **Note**: When using as a Git plugin (`git gone`), commands work the same way:
