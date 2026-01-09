@@ -17,7 +17,20 @@ Works as a native Git extension: `git gone`
 
 ## Installation
 
-### Quick install (recommended)
+### Homebrew (macOS/Linux)
+
+```bash
+brew install theburrowhub/tap/git-gone
+```
+
+Or first tap the repository and then install:
+
+```bash
+brew tap theburrowhub/tap
+brew install git-gone
+```
+
+### Quick install
 
 ```bash
 # Download and run the installation script
