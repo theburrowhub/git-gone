@@ -321,7 +321,7 @@ func generateCSVReport(report *AnalysisReport) string {
 	writer := csv.NewWriter(&sb)
 
 	// Header
-	writer.Write([]string{"Name", "Status", "Delete Method", "Reason", "Remote Status", "Last Commit"})
+	_ = writer.Write([]string{"Name", "Status", "Delete Method", "Reason", "Remote Status", "Last Commit"})
 
 	// All branches
 	allBranches := append(report.SafeToDelete, report.LocalOnly...)
@@ -329,7 +329,7 @@ func generateCSVReport(report *AnalysisReport) string {
 	allBranches = append(allBranches, report.Protected...)
 
 	for _, branch := range allBranches {
-		writer.Write([]string{
+		_ = writer.Write([]string{
 			branch.Name,
 			branch.Status,
 			branch.DeleteMethod,
