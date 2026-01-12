@@ -22,6 +22,7 @@ type Branch struct {
 }
 
 const unmergedPrefix = "(!) "
+const localUnmergedPrefix = "(*) "
 
 var branchesCmd = &cobra.Command{
 	Use:   "branches",
@@ -115,6 +116,13 @@ func runCleanup() {
 		}
 	}
 
+	// Detectar ramas sin upstream
+	branchesWithoutUpstream, err := getBranchesWithoutUpstream()
+	if err != nil {
+		fmt.Printf("⚠️  Warning: Failed to detect branches without upstream: %v\n", err)
+		branchesWithoutUpstream = make(map[string]bool)
+	}
+
 	// Track unmerged branches if -u flag is set
 	unmergedBranchesMap := make(map[string]bool)
 	if includeUnmerged {
@@ -132,12 +140,25 @@ func runCleanup() {
 	}
 
 	// Convert maps to display list
+	// Local branches (without upstream) are treated as unmerged even if merged
 	var branchesToDelete []string
+	localBranchesCount := 0
 	for branch := range safeToDeleteMap {
-		branchesToDelete = append(branchesToDelete, branch)
+		if branchesWithoutUpstream[branch] {
+			// Local branch without upstream -> treat as unmerged
+			branchesToDelete = append(branchesToDelete, localUnmergedPrefix+branch)
+			localBranchesCount++
+		} else {
+			branchesToDelete = append(branchesToDelete, branch)
+		}
 	}
 	for branch := range unmergedBranchesMap {
-		branchesToDelete = append(branchesToDelete, unmergedPrefix+branch)
+		if branchesWithoutUpstream[branch] {
+			branchesToDelete = append(branchesToDelete, localUnmergedPrefix+branch)
+			localBranchesCount++
+		} else {
+			branchesToDelete = append(branchesToDelete, unmergedPrefix+branch)
+		}
 	}
 
 	if len(branchesToDelete) == 0 {
@@ -156,12 +177,21 @@ func runCleanup() {
 		fmt.Printf("   • %d branches merged into %s\n", len(mergedBranches), defaultBranch)
 	}
 	if len(unmergedBranchesMap) > 0 {
-		fmt.Printf("   • %d unmerged branches ((!) requires confirmation)\n", len(unmergedBranchesMap))
+		fmt.Printf("   • %d unmerged branches (requires confirmation)\n", len(unmergedBranchesMap))
+	}
+	if localBranchesCount > 0 {
+		fmt.Printf("   • %d local branches without remote (requires confirmation)\n", localBranchesCount)
 	}
 
-	// Show legend if there are unmerged branches
-	if len(unmergedBranchesMap) > 0 {
-		fmt.Println("\n   (!) Unmerged")
+	// Show legend if there are special branches
+	if len(unmergedBranchesMap) > 0 || localBranchesCount > 0 {
+		fmt.Println("\n   Legend:")
+		if len(unmergedBranchesMap) > 0 {
+			fmt.Println("   (!) Unmerged (has remote)")
+		}
+		if localBranchesCount > 0 {
+			fmt.Println("   (*) Local only (no remote)")
+		}
 	}
 
 	// Select branches: use all if -a flag is set, otherwise use interactive fzf
@@ -188,9 +218,12 @@ func runCleanup() {
 	// Separate unmerged branches from safe branches
 	var safeBranches []string
 	var unmergedSelected []string
+	var localUnmergedSelected []string
 	for _, branch := range selectedBranches {
 		if strings.HasPrefix(branch, unmergedPrefix) {
 			unmergedSelected = append(unmergedSelected, strings.TrimPrefix(branch, unmergedPrefix))
+		} else if strings.HasPrefix(branch, localUnmergedPrefix) {
+			localUnmergedSelected = append(localUnmergedSelected, strings.TrimPrefix(branch, localUnmergedPrefix))
 		} else {
 			safeBranches = append(safeBranches, branch)
 		}
@@ -203,6 +236,9 @@ func runCleanup() {
 	}
 	for _, branch := range unmergedSelected {
 		fmt.Printf("  • %s%s (local + remote)\n", unmergedPrefix, branch)
+	}
+	for _, branch := range localUnmergedSelected {
+		fmt.Printf("  • %s%s (local only)\n", localUnmergedPrefix, branch)
 	}
 
 	// Confirm deletion for safe branches (unless --force is used)
@@ -219,10 +255,14 @@ func runCleanup() {
 	}
 
 	// Always confirm unmerged branches (even with -f)
-	if len(unmergedSelected) > 0 {
-		fmt.Printf("\n🚨 WARNING: You are about to delete %d UNMERGED branch(es):\n", len(unmergedSelected))
+	totalUnmerged := len(unmergedSelected) + len(localUnmergedSelected)
+	if totalUnmerged > 0 {
+		fmt.Printf("\n🚨 WARNING: You are about to delete %d UNMERGED branch(es):\n", totalUnmerged)
 		for _, branch := range unmergedSelected {
 			fmt.Printf("   • %s (will be deleted locally AND from remote)\n", branch)
+		}
+		for _, branch := range localUnmergedSelected {
+			fmt.Printf("   • %s (local only)\n", branch)
 		}
 		fmt.Print("\n⚠️  This action cannot be undone! Type 'DELETE' to confirm: ")
 		reader := bufio.NewReader(os.Stdin)
@@ -234,6 +274,7 @@ func runCleanup() {
 			// Still delete safe branches if force was used
 			if forceDelete && len(safeBranches) > 0 {
 				unmergedSelected = []string{}
+				localUnmergedSelected = []string{}
 			} else {
 				return
 			}
@@ -257,6 +298,16 @@ func runCleanup() {
 			fmt.Printf("❌ Failed to delete branch %s: %v\n", branch, err)
 		} else {
 			fmt.Printf("✅ Deleted branch (local + remote): %s\n", branch)
+			deletedCount++
+		}
+	}
+
+	// Delete local unmerged branches (force delete, local only)
+	for _, branch := range localUnmergedSelected {
+		if err := forceDeleteLocalBranch(branch); err != nil {
+			fmt.Printf("❌ Failed to delete branch %s: %v\n", branch, err)
+		} else {
+			fmt.Printf("✅ Deleted branch (local only): %s\n", branch)
 			deletedCount++
 		}
 	}
@@ -444,6 +495,40 @@ func getAllLocalBranches() ([]string, error) {
 		}
 	}
 	return branches, nil
+}
+
+func getBranchesWithoutUpstream() (map[string]bool, error) {
+	cmd := exec.Command("git", "branch", "--format", "%(refname:short) %(upstream)")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	noUpstream := make(map[string]bool)
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts := strings.Fields(line)
+		if len(parts) == 1 {
+			// Solo tiene nombre, no tiene upstream
+			noUpstream[parts[0]] = true
+		}
+	}
+	return noUpstream, nil
+}
+
+func forceDeleteLocalBranch(branch string) error {
+	cmd := exec.Command("git", "branch", "-D", branch)
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%s", string(output))
+	}
+	return nil
 }
 
 func deleteBranchWithRemote(branch string) error {
