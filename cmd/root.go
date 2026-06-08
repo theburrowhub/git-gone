@@ -52,4 +52,5 @@ func init() {
 	rootCmd.AddCommand(tagsCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(selfUpdateCmd)
+	rootCmd.AddCommand(reportCmd)
 }

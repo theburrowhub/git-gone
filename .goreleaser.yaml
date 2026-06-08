@@ -1,0 +1,124 @@
+# .goreleaser.yaml
+# Documentation: https://goreleaser.com
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: git-gone
+    binary: git-gone
+    main: .
+    ldflags:
+      - "-s -w"
+      - "-X git-gone/cmd.Version={{.Version}}"
+      - "-X git-gone/cmd.CommitHash={{.ShortCommit}}"
+      - "-X git-gone/cmd.BuildTime={{.Date}}"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      # Windows ARM64 is not common, skip it
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: git-gone-archives
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    builds:
+      - git-gone
+    # Use zip for Windows
+    format_overrides:
+      - goos: windows
+        format: zip
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - "Merge pull request"
+      - "Merge branch"
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+release:
+  github:
+    owner: theburrowhub
+    name: git-gone
+  draft: false
+  prerelease: auto
+  name_template: "Release v{{ .Version }}"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+# ========== DOCKER CONFIGURATION ==========
+dockers:
+  # AMD64
+  - id: git-gone-amd64
+    ids:
+      - git-gone
+    goos: linux
+    goarch: amd64
+    image_templates:
+      - "ghcr.io/theburrowhub/git-gone:{{ .Version }}-amd64"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=Clean up merged git branches interactively"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.source={{ .GitURL }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+
+  # ARM64
+  - id: git-gone-arm64
+    ids:
+      - git-gone
+    goos: linux
+    goarch: arm64
+    image_templates:
+      - "ghcr.io/theburrowhub/git-gone:{{ .Version }}-arm64"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=Clean up merged git branches interactively"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.source={{ .GitURL }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+      - "--label=org.opencontainers.image.licenses=MIT"
+
+# Multi-arch manifest (combines amd64 and arm64 into a single tag)
+docker_manifests:
+  - name_template: "ghcr.io/theburrowhub/git-gone:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/theburrowhub/git-gone:{{ .Version }}-amd64"
+      - "ghcr.io/theburrowhub/git-gone:{{ .Version }}-arm64"
+
+  - name_template: "ghcr.io/theburrowhub/git-gone:latest"
+    image_templates:
+      - "ghcr.io/theburrowhub/git-gone:{{ .Version }}-amd64"
+      - "ghcr.io/theburrowhub/git-gone:{{ .Version }}-arm64"
+    # Only update :latest if not a prerelease
+    skip_push: auto
+

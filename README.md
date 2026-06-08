@@ -16,10 +16,24 @@ Works as a native Git extension: `git gone`
 - ✅ Safe deletion with confirmation prompt
 - ⚠️ Extra safety for dangerous operations (unmerged branches require typing "DELETE")
 - 📊 Clear status indicators throughout the process
+- 📋 Generate detailed branch analysis reports (text/JSON/CSV)
 
 ## Installation
 
-### Quick install (recommended)
+### Homebrew (macOS/Linux)
+
+```bash
+brew install theburrowhub/tap/git-gone
+```
+
+Or first tap the repository and then install:
+
+```bash
+brew tap theburrowhub/tap
+brew install git-gone
+```
+
+### Quick install
 
 ```bash
 # Download and run the installation script
@@ -29,7 +43,7 @@ curl -sSL https://raw.githubusercontent.com/theburrowhub/git-gone/main/install.s
 
 **Note**: The installation script will automatically:
 - Try to download pre-built releases if available
-- Fall back to building from source if no releases exist (requires Git and Go 1.19+)
+- Fall back to building from source if no releases exist (requires Git and Go 1.24+)
 - Install the binary to `~/.local/bin` by default
 
 ### From source
@@ -133,7 +147,94 @@ git-gone branches --help
 git-gone tags --help
 ```
 
+## Report Mode
+
+Generate a detailed analysis report without deleting any branches:
+
+### Basic Report
+
+```bash
+git-gone report
+```
+
+### Output Formats
+
+```bash
+# Text format (default)
+git-gone report --output text
+
+# JSON format (for scripting/automation)
+git-gone report --output json
+git-gone report -o json
+
+# CSV format (for spreadsheets)
+git-gone report --output csv
+```
+
+### Save to File
+
+```bash
+git-gone report --output json --file report.json
+```
+
+### Include Unmerged Branches
+
+```bash
+git-gone report --unmerged
+git-gone report -u
+```
+
+### Report Categories
+
+The report classifies branches into:
+
+- **Safe to Delete**: Merged branches or branches with deleted remotes
+- **Local-only**: Merged but never pushed to remote (review recommended)
+- **Unmerged**: Not merged, requires `--unmerged` flag to include
+- **Protected**: Default branch or currently checked out
+
+### Example Report Output
+
+```
+============================================================
+              GIT-GONE BRANCH ANALYSIS REPORT
+============================================================
+Repository: /path/to/repo
+Date: 2026-01-09 14:30:00
+Default Branch: main
+Current Branch: feature/ui
+
+------------------------------------------------------------
+SAFE TO DELETE (2 branches)
+------------------------------------------------------------
+  * feature/old-login
+    Method: merged | Reason: Merged into main
+    Remote: gone | Last commit: 2025-12-15
+
+------------------------------------------------------------
+LOCAL-ONLY (1 branch) - Merged but never pushed
+------------------------------------------------------------
+  * temp/local-experiment
+    Method: merged | Reason: Merged but never pushed to remote
+    Remote: local_only | Last commit: 2025-12-10
+
+------------------------------------------------------------
+PROTECTED (2 branches)
+------------------------------------------------------------
+  * main
+    Reason: Default branch
+
+  * feature/ui
+    Reason: Currently checked out
+
+============================================================
+SUMMARY: 2 safe | 1 local-only | 0 unmerged | 2 protected
+============================================================
+```
+
 ## Command Structure
+
+git-gone uses a subcommand structure powered by Cobra:
 
 ```
 git-gone
@@ -148,6 +249,10 @@ git-gone
 │       ├── --all, -a    # Select all stale tags
 │       ├── --force, -f  # Skip confirmation
 │       └── --no-stale, -n  # Include ALL local tags
+├── report               # Generate analysis report (no deletion)
+│   ├── --output, -o     # Output format (text/json/csv)
+│   ├── --file           # Save report to file
+│   └── --unmerged, -u   # Include unmerged branches
 ├── version              # Show version info
 ├── self-update          # Update to latest release
 └── help                 # Auto-generated help
@@ -185,7 +290,7 @@ When using `-u` flag, a legend is shown:
 
 ## Requirements
 
-- Go 1.19 or higher (for building from source)
+- Go 1.24 or higher (for building from source)
 - Git installed and configured
 - Terminal with UTF-8 support (for emoji indicators)
 
