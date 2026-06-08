@@ -85,7 +85,7 @@ func runSelfUpdate() {
 		fmt.Println("  • Latest release not available for your platform")
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Printf("❌ Failed to download update: HTTP %d\n", resp.StatusCode)
