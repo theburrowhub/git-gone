@@ -58,8 +58,8 @@ func NewTestHelper(t *testing.T) *TestHelper {
 
 // Cleanup removes the temp directory and restores working dir.
 func (h *TestHelper) Cleanup() {
-	os.Chdir(h.origDir)
-	os.RemoveAll(h.tempDir)
+	_ = os.Chdir(h.origDir)
+	_ = os.RemoveAll(h.tempDir)
 }
 
 // CreateBranch creates a new branch with a commit.
@@ -99,7 +99,9 @@ func createFile(t *testing.T, name, content string) {
 	t.Helper()
 	dir := filepath.Dir(name)
 	if dir != "." && dir != "" {
-		os.MkdirAll(dir, 0755)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			t.Fatalf("Failed to create dir %s: %v", dir, err)
+		}
 	}
 	if err := os.WriteFile(name, []byte(content), 0644); err != nil {
 		t.Fatalf("Failed to create file %s: %v", name, err)
@@ -192,7 +194,7 @@ func TestFilterProtectedBranches_ExcludesCurrentAndDefault(t *testing.T) {
 func TestFilterProtectedBranches_HandlesEmptyList(t *testing.T) {
 	filtered := git.FilterProtectedBranches([]string{}, "main", "current")
 
-	if filtered != nil && len(filtered) != 0 {
+	if len(filtered) != 0 {
 		t.Errorf("Expected empty result for empty input, got: %v", filtered)
 	}
 }

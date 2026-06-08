@@ -113,21 +113,25 @@ func FilterProtectedBranches(branches []string, defaultBranch, currentBranch str
 	return filtered
 }
 
-// DeleteBranch deletes a local branch. It tries safe delete first, then force delete.
-func DeleteBranch(name string) error {
-	cmd := exec.Command("git", "branch", "-d", name)
-	cmd.Env = append(os.Environ(), "LC_ALL=C")
-	err := cmd.Run()
-
-	if err != nil {
-		cmd = exec.Command("git", "branch", "-D", name)
-		cmd.Env = append(os.Environ(), "LC_ALL=C")
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("%s", string(output))
-		}
+// DeleteBranch deletes a local branch.
+//
+// When force is false it performs a safe delete (git branch -d) and returns the
+// underlying error if the branch has unmerged commits — it never escalates to a
+// force delete on its own. The caller is responsible for deciding whether to
+// force-delete based on the branch risk level (RiskSafe vs RiskDangerous).
+//
+// When force is true it performs a force delete (git branch -D).
+func DeleteBranch(name string, force bool) error {
+	flag := "-d"
+	if force {
+		flag = "-D"
 	}
-
+	cmd := exec.Command("git", "branch", flag, name)
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%s", string(output))
+	}
 	return nil
 }
 
@@ -140,8 +144,10 @@ func DeleteBranchWithRemote(name string) error {
 	if err != nil {
 		outputStr := string(output)
 		if !strings.Contains(outputStr, "remote ref does not exist") {
-			// Log warning but continue with local delete
-			fmt.Printf("⚠️  Warning: Failed to delete remote branch %s: %s\n", name, outputStr)
+			// Library code does not format user-facing output: emit a plain
+			// warning to stderr and continue with the local delete. The cmd
+			// layer owns emoji/styling for anything user-visible.
+			fmt.Fprintf(os.Stderr, "warning: failed to delete remote branch %s: %s\n", name, outputStr)
 		}
 	}
 

@@ -15,11 +15,11 @@ func TestIntegration_NotInGitRepository(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	origDir, _ := os.Getwd()
-	defer os.Chdir(origDir)
-	os.Chdir(tempDir)
+	defer func() { _ = os.Chdir(origDir) }()
+	_ = os.Chdir(tempDir)
 
 	err = git.CheckGitRepository()
 	if err == nil {
@@ -56,14 +56,14 @@ func TestIntegration_PartialDeletionFailure(t *testing.T) {
 	h.CheckoutMain()
 	h.MergeBranch("test-branch")
 
-	// Delete should succeed
-	err := git.DeleteBranch("test-branch")
+	// Delete should succeed (branch is merged, safe delete works)
+	err := git.DeleteBranch("test-branch", false)
 	if err != nil {
 		t.Errorf("DeleteBranch should succeed: %v", err)
 	}
 
 	// Deleting again should fail (branch doesn't exist)
-	err = git.DeleteBranch("test-branch")
+	err = git.DeleteBranch("test-branch", false)
 	if err == nil {
 		t.Error("DeleteBranch should fail for non-existent branch")
 	}
@@ -78,12 +78,12 @@ func TestIntegration_NonEnglishLocale(t *testing.T) {
 	originalLang := os.Getenv("LANG")
 	originalLcAll := os.Getenv("LC_ALL")
 	defer func() {
-		os.Setenv("LANG", originalLang)
-		os.Setenv("LC_ALL", originalLcAll)
+		_ = os.Setenv("LANG", originalLang)
+		_ = os.Setenv("LC_ALL", originalLcAll)
 	}()
 
-	os.Setenv("LANG", "es_ES.UTF-8")
-	os.Setenv("LC_ALL", "es_ES.UTF-8")
+	_ = os.Setenv("LANG", "es_ES.UTF-8")
+	_ = os.Setenv("LC_ALL", "es_ES.UTF-8")
 
 	// Git operations should still work because internal/git uses LC_ALL=C
 	defaultBranch, err := git.GetDefaultBranch()
@@ -117,7 +117,7 @@ func TestIntegration_GitPluginMode(t *testing.T) {
 	if output, err := buildCmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build: %v\nOutput: %s", err, string(output))
 	}
-	defer os.Remove(binaryPath)
+	defer func() { _ = os.Remove(binaryPath) }()
 
 	// Test standalone mode
 	cmd := exec.Command(binaryPath, "--help")
@@ -149,11 +149,11 @@ func TestIntegration_DifferentDefaultBranches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to create temp dir: %v", err)
 			}
-			defer os.RemoveAll(tempDir)
+			defer func() { _ = os.RemoveAll(tempDir) }()
 
 			origDir, _ := os.Getwd()
-			defer os.Chdir(origDir)
-			os.Chdir(tempDir)
+			defer func() { _ = os.Chdir(origDir) }()
+			_ = os.Chdir(tempDir)
 
 			// Initialize git repo with specific branch name
 			runGitCmd(t, "init")

@@ -31,6 +31,6 @@ func ConfirmDangerousOperation(items []string, itemType string) bool {
 	for _, item := range items {
 		fmt.Printf("   • %s\n", item)
 	}
-	fmt.Printf("\n%s  This action cannot be undone! Type 'DELETE' to confirm: ", EmojiWarning)
-	return TypedConfirmation("", "DELETE")
+	prompt := fmt.Sprintf("\n%s  This action cannot be undone! Type 'DELETE' to confirm: ", EmojiWarning)
+	return TypedConfirmation(prompt, "DELETE")
 }

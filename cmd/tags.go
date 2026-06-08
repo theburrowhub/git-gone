@@ -1,16 +1,13 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 
 	"git-gone/internal/git"
 	"git-gone/internal/tui"
 
-	"github.com/koki-develop/go-fzf"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +25,7 @@ This command provides subcommands to list and clean stale tags
 Use --no-stale (-n) to include ALL local tags, not just stale ones.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Default behavior: show help
-		cmd.Help()
+		_ = cmd.Help()
 	},
 }
 
@@ -155,11 +152,9 @@ func runTagsList() {
 }
 
 func runTagsClean() {
-	// Validate incompatible flags
-	if selectAll && forceDelete {
-		fmt.Printf("%s Options -a (--all) and -f (--force) are incompatible\n", tui.EmojiError)
-		os.Exit(1)
-	}
+	// Unlike branches, tags have no unmerged/dangerous distinction, so
+	// "clean --all --force" is a valid batch workflow: select every stale
+	// tag and delete it without confirmation. No incompatibility check here.
 
 	// Check if we're in a git repository
 	if err := git.CheckGitRepository(); err != nil {
@@ -216,7 +211,7 @@ func runTagsClean() {
 	if selectAll {
 		selectedTags = tags
 	} else {
-		selectedTags, err = selectTagsWithFzf(tags)
+		selectedTags, err = tui.SelectTags(tags)
 		if err != nil {
 			if err.Error() == "abort" {
 				fmt.Printf("\n%s Selection cancelled\n", tui.EmojiError)
@@ -240,12 +235,7 @@ func runTagsClean() {
 
 	// Confirm deletion (unless --force is used)
 	if !forceDelete {
-		fmt.Print("\nAre you sure you want to delete these tags? (y/N): ")
-		reader := bufio.NewReader(os.Stdin)
-		response, _ := reader.ReadString('\n')
-		response = strings.TrimSpace(strings.ToLower(response))
-
-		if response != "y" && response != "yes" {
+		if !tui.ConfirmDeletion("Are you sure you want to delete these tags?") {
 			fmt.Printf("%s Deletion cancelled\n", tui.EmojiError)
 			return
 		}
@@ -263,38 +253,4 @@ func runTagsClean() {
 	}
 
 	fmt.Printf("\n%s Successfully deleted %d tag(s)\n", tui.EmojiCelebrate, deletedCount)
-}
-
-func selectTagsWithFzf(tags []string) ([]string, error) {
-	if len(tags) == 0 {
-		return []string{}, nil
-	}
-
-	f, err := fzf.New(
-		fzf.WithLimit(len(tags)),
-		fzf.WithNoLimit(true),
-		fzf.WithPrompt("Select tags to delete > "),
-		fzf.WithCursor("> "),
-		fzf.WithSelectedPrefix("[✓] "),
-		fzf.WithUnselectedPrefix("[ ] "),
-		fzf.WithInputPlaceholder("Type to filter, Tab to select/deselect, Enter to confirm, Esc to cancel"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	indices, err := f.Find(tags, func(i int) string {
-		return tags[i]
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("abort")
-	}
-
-	selected := make([]string, len(indices))
-	for i, idx := range indices {
-		selected[i] = tags[idx]
-	}
-
-	return selected, nil
 }

@@ -28,11 +28,11 @@ func TestBranchesCommand_InNonGitRepo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	origDir, _ := os.Getwd()
-	defer os.Chdir(origDir)
-	os.Chdir(tempDir)
+	defer func() { _ = os.Chdir(origDir) }()
+	_ = os.Chdir(tempDir)
 
 	// Use the git package directly
 	err = git.CheckGitRepository()
@@ -47,11 +47,11 @@ func TestTagsListCommand_InNonGitRepo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	origDir, _ := os.Getwd()
-	defer os.Chdir(origDir)
-	os.Chdir(tempDir)
+	defer func() { _ = os.Chdir(origDir) }()
+	_ = os.Chdir(tempDir)
 
 	// Use the git package directly
 	err = git.CheckGitRepository()
@@ -71,7 +71,7 @@ func TestVersionCommand_ShowsVersion(t *testing.T) {
 	if output, err := buildCmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build: %v\nOutput: %s", err, string(output))
 	}
-	defer os.Remove(binaryPath)
+	defer func() { _ = os.Remove(binaryPath) }()
 
 	cmd := exec.Command(binaryPath, "version")
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
@@ -98,7 +98,7 @@ func TestHelpCommand_ShowsHelp(t *testing.T) {
 	if output, err := buildCmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build: %v\nOutput: %s", err, string(output))
 	}
-	defer os.Remove(binaryPath)
+	defer func() { _ = os.Remove(binaryPath) }()
 
 	cmd := exec.Command(binaryPath, "--help")
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
@@ -129,7 +129,7 @@ func TestBranchesCommand_WithIncompatibleFlags(t *testing.T) {
 	if output, err := buildCmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build: %v\nOutput: %s", err, string(output))
 	}
-	defer os.Remove(binaryPath)
+	defer func() { _ = os.Remove(binaryPath) }()
 
 	// Create a temp git repo to run the command in
 	h := NewTestHelper(t)
