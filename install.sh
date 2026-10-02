@@ -88,7 +88,7 @@ detect_platform() {
             os="linux"
             ;;
         darwin*)
-            os="macos"
+            os="darwin"
             ;;
         *)
             print_error "Unsupported operating system: $os"
@@ -107,14 +107,14 @@ detect_platform() {
             ;;
     esac
     
-    echo "${os}-${arch}"
+    echo "${os}_${arch}"
 }
 
 download_and_install_remote() {
     print_info "Fetching latest release information..."
     local version=$(get_latest_release)
     local platform=$(detect_platform)
-    local archive_name="${BINARY_NAME}-${platform}.tar.gz"
+    local archive_name="${BINARY_NAME}_${version#v}_${platform}.tar.gz"
     local download_url="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${version}/${archive_name}"
     local temp_dir=$(mktemp -d)
     
@@ -139,14 +139,14 @@ download_and_install_remote() {
     
     print_info "Extracting archive..."
     cd "$temp_dir"
-    if ! tar -xzf "$archive_name"; then
+    if ! tar --no-same-owner -xzf "$archive_name"; then
         cd - > /dev/null
         rm -rf "$temp_dir"
         print_error "Failed to extract archive. The downloaded file might be corrupted."
     fi
     
-    # Find the binary (it might be named differently in the archive)
-    local binary_path=$(find . -name "${BINARY_NAME}-${platform}" -type f | head -n1)
+    # GoReleaser archives contain the binary without a platform suffix.
+    local binary_path=$(find . -name "${BINARY_NAME}" -type f | head -n1)
     if [ -z "$binary_path" ]; then
         cd - > /dev/null
         rm -rf "$temp_dir"

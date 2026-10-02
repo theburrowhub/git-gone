@@ -37,13 +37,13 @@ brew install git-gone
 
 ```bash
 # Download and run the installation script
-# Will download pre-built binary if available, or build from source automatically
+# Downloads the latest pre-built binary for Linux or macOS
 curl -sSL https://raw.githubusercontent.com/theburrowhub/git-gone/main/install.sh | bash
 ```
 
 **Note**: The installation script will automatically:
-- Try to download pre-built releases if available
-- Fall back to building from source if no releases exist (requires Git and Go 1.24+)
+- Download the latest release archive for Linux or macOS (amd64/arm64)
+- Build from source when run inside a clone of the official repository (requires Go 1.24+)
 - Install the binary to `~/.local/bin` by default
 
 ### From source
